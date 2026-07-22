@@ -66,7 +66,7 @@ def get_global_shap(condition, X: pd.DataFrame):
 # ── INDIVIDUAL SHAP — why THIS patient got this prediction ───────────────────
 def get_individual_shap(condition, patient_data: dict):
     model, features = load_model_and_features(condition)
-    df = pd.DataFrame([patient_data])[features]
+    df = pd.DataFrame([patient_data]).reindex(columns=features, fill_value=0)
 
     explainer = shap.TreeExplainer(model)
     shap_values = explainer.shap_values(df)
@@ -112,11 +112,13 @@ if __name__ == "__main__":
     print("Top 5 features:", list(global_heart.items())[:5])
 
     print("\nTesting Individual SHAP — Heart Disease...")
-    sample_patient = {
-        "age": 54, "sex": 1, "cp": 3, "trestbps": 145,
-        "chol": 233, "fbs": 1, "restecg": 0, "thalach": 150,
-        "exang": 0, "oldpeak": 2.3, "slope": 0, "ca": 0, "thal": 1
+    from model import encode_heart_patient
+    raw_patient = {
+        "Age": 54, "Sex": "M", "ChestPainType": "ASY", "RestingBP": 145,
+        "Cholesterol": 233, "FastingBS": 1, "RestingECG": "Normal",
+        "MaxHR": 150, "ExerciseAngina": "N", "Oldpeak": 2.3, "ST_Slope": "Flat"
     }
+    sample_patient = encode_heart_patient(raw_patient)
     individual_heart = get_individual_shap("heart", sample_patient)
     print("Top 5 individual factors:", list(individual_heart.items())[:5])
 
