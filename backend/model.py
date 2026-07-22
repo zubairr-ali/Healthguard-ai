@@ -244,7 +244,7 @@ def predict_patient(condition, patient_data: dict):
     else:
         prob = model.predict_proba(df)[0][1]
 
-    risk_score = round(prob * 100, 1)
+    risk_score = round(float(prob) * 100, 1)
     risk_level = "High" if risk_score >= 70 else "Medium" if risk_score >= 40 else "Low"
 
     return {"risk_score": risk_score, "risk_level": risk_level, "model_used": model_name}

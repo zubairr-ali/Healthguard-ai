@@ -5,7 +5,24 @@ from typing import Optional
 import pandas as pd
 import json
 
-from model import load_heart, load_diabetes, predict_patient, train_models
+from model import load_heart, load_diabetes, predict_patient, train_models, encode_heart_patient
+
+def clean_json(obj):
+    """Recursively convert numpy types to plain Python types for JSON serialization."""
+    import numpy as np
+    if isinstance(obj, dict):
+        return {k: clean_json(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [clean_json(v) for v in obj]
+    elif isinstance(obj, (np.floating, np.float32, np.float64)):
+        return round(float(obj), 3)
+    elif isinstance(obj, float):
+        return round(obj, 3)
+    elif isinstance(obj, (np.integer, np.int32, np.int64)):
+        return int(obj)
+    else:
+        return obj
+    
 from shap_explainer import get_global_shap, get_individual_shap
 from llm_advisor import generate_advisory, generate_fallback_advisory
 from database import init_db, save_prediction, get_all_predictions, get_stats
@@ -30,19 +47,17 @@ async def startup():
 
 # ── Request models ───────────────────────────────────────────────────────────
 class HeartPatient(BaseModel):
-    age: float
-    sex: float
-    cp: float
-    trestbps: float
-    chol: float
-    fbs: float
-    restecg: float
-    thalach: float
-    exang: float
-    oldpeak: float
-    slope: float
-    ca: float
-    thal: float
+    Age: float
+    Sex: str          # "M" or "F"
+    ChestPainType: str  # "TA", "ATA", "NAP", "ASY"
+    RestingBP: float
+    Cholesterol: float
+    FastingBS: int     # 0 or 1
+    RestingECG: str    # "Normal", "ST", "LVH"
+    MaxHR: float
+    ExerciseAngina: str  # "Y" or "N"
+    Oldpeak: float
+    ST_Slope: str      # "Up", "Flat", "Down"
 
 
 class DiabetesPatient(BaseModel):
@@ -66,7 +81,8 @@ def root():
 @app.post("/api/predict/heart")
 def predict_heart(patient: HeartPatient):
     try:
-        patient_dict = patient.model_dump()
+        raw_dict = patient.model_dump()
+        patient_dict = encode_heart_patient(raw_dict)
 
         # Prediction
         result = predict_patient("heart", patient_dict)
@@ -93,14 +109,14 @@ def predict_heart(patient: HeartPatient):
             advisory=advisory
         )
 
-        return {
+        return clean_json({
             "condition": "heart",
             "risk_score": result["risk_score"],
             "risk_level": result["risk_level"],
             "model_used": result["model_used"],
             "shap_values": shap_vals,
             "advisory": advisory
-        }
+        })
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -131,14 +147,14 @@ def predict_diabetes(patient: DiabetesPatient):
             advisory=advisory
         )
 
-        return {
+        return clean_json({
             "condition": "diabetes",
             "risk_score": result["risk_score"],
             "risk_level": result["risk_level"],
             "model_used": result["model_used"],
             "shap_values": shap_vals,
             "advisory": advisory
-        }
+        })
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

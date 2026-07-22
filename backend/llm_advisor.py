@@ -71,7 +71,7 @@ def generate_fallback_advisory(condition_name: str, risk_score: float,
 
     return (
         f"Patient Risk Summary: This patient has been assessed as {risk_level.upper()} "
-        f"risk for {condition_name} with a risk score of {risk_score}%.\n\n"
+        f"risk for {condition_name} with a risk score of {round(float(risk_score), 1)}%.\n\n"
         f"Key Risk Factors: The primary contributing factors identified by the "
         f"AI analysis are: {factors_str}.\n\n"
         f"Recommendation: {'Prompt clinical review is advised given the elevated '  + 'risk profile identified.' if risk_level == 'High' else 'Continued monitoring and preventative measures are recommended.' if risk_level == 'Medium' else 'Continue current health management and routine monitoring.'}\n\n"
