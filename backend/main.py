@@ -98,14 +98,14 @@ def predict_heart(patient: HeartPatient):
             list(shap_vals.items())[:3]
         )
 
-        # Save to database
+        # Save to database — clean numpy types before storing
         save_prediction(
             condition="heart",
-            patient_data=patient_dict,
-            risk_score=result["risk_score"],
+            patient_data=clean_json(patient_dict),
+            risk_score=float(result["risk_score"]),
             risk_level=result["risk_level"],
             model_used=result["model_used"],
-            top_factors=dict(list(shap_vals.items())[:5]),
+            top_factors=clean_json(dict(list(shap_vals.items())[:5])),
             advisory=advisory
         )
 
@@ -139,11 +139,11 @@ def predict_diabetes(patient: DiabetesPatient):
 
         save_prediction(
             condition="diabetes",
-            patient_data=patient_dict,
-            risk_score=result["risk_score"],
+            patient_data=clean_json(patient_dict),
+            risk_score=float(result["risk_score"]),
             risk_level=result["risk_level"],
             model_used=result["model_used"],
-            top_factors=dict(list(shap_vals.items())[:5]),
+            top_factors=clean_json(dict(list(shap_vals.items())[:5])),
             advisory=advisory
         )
 
