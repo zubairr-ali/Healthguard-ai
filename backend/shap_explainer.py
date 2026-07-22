@@ -7,6 +7,21 @@ import matplotlib
 matplotlib.use("Agg")  # Non-interactive backend for saving files
 import matplotlib.pyplot as plt
 
+CATEGORICAL_PREFIXES = ["Sex", "ChestPainType", "RestingECG", "ExerciseAngina", "ST_Slope"]
+
+def aggregate_categorical_shap(shap_dict):
+    """
+    Collapses one-hot encoded dummy columns (e.g. ST_Slope_Up, ST_Slope_Flat)
+    back into their original clinical variable (ST_Slope) by summing SHAP
+    contributions — mathematically valid since SHAP values are additive.
+    """
+    aggregated = {}
+    for feat, val in shap_dict.items():
+        matched_prefix = next((p for p in CATEGORICAL_PREFIXES if feat.startswith(p + "_")), None)
+        key = matched_prefix if matched_prefix else feat
+        aggregated[key] = aggregated.get(key, 0) + val
+    return dict(sorted(aggregated.items(), key=lambda x: abs(x[1]), reverse=True))
+
 # ── paths ───────────────────────────────────────────────────────────────────
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODELS_DIR = os.path.join(BASE_DIR, "models")
@@ -60,7 +75,7 @@ def get_global_shap(condition, X: pd.DataFrame):
     plt.savefig(os.path.join(PLOTS_DIR, f"{condition}_global_shap.png"), dpi=150)
     plt.close()
 
-    return sorted_importance
+    return aggregate_categorical_shap(sorted_importance)
 
 
 # ── INDIVIDUAL SHAP — why THIS patient got this prediction ───────────────────
@@ -99,7 +114,7 @@ def get_individual_shap(condition, patient_data: dict):
     plt.savefig(os.path.join(PLOTS_DIR, f"{condition}_individual_shap.png"), dpi=150)
     plt.close()
 
-    return sorted_individual
+    return aggregate_categorical_shap(sorted_individual)
 
 
 # ── TEST when run directly ───────────────────────────────────────────────────
