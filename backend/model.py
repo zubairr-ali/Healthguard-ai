@@ -1,10 +1,13 @@
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split, StratifiedKFold, RandomizedSearchCV, cross_val_score
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, StackingClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.svm import SVC
+from sklearn.neural_network import MLPClassifier
 from xgboost import XGBClassifier
+from lightgbm import LGBMClassifier
+from catboost import CatBoostClassifier
+from tabpfn import TabPFNClassifier
 from sklearn.metrics import (
     accuracy_score, precision_score, recall_score, f1_score,
     confusion_matrix, roc_auc_score, roc_curve
@@ -29,31 +32,18 @@ os.makedirs(PLOTS_DIR, exist_ok=True)
 os.makedirs(RESULTS_DIR, exist_ok=True)
 
 
-# ── LOADERS ──────────────────────────────────────────────────────────────────
 def load_heart():
-    """
-    Loads the combined heart disease dataset (918 rows, 5 hospitals).
-    Cleans invalid zero values in RestingBP/Cholesterol, one-hot encodes
-    categorical clinical variables, keeping all categories for interpretability.
-    """
     df = pd.read_csv(HEART_PATH)
-
-    # RestingBP=0 and Cholesterol=0 are data entry errors, not real values.
-    # Replace with median, computed separately per class to avoid leaking
-    # target information across the whole dataset.
     df.loc[df["RestingBP"] == 0, "RestingBP"] = np.nan
     df.loc[df["Cholesterol"] == 0, "Cholesterol"] = np.nan
     df["RestingBP"] = df["RestingBP"].fillna(df["RestingBP"].median())
     df["Cholesterol"] = df.groupby("HeartDisease")["Cholesterol"].transform(
         lambda x: x.fillna(x.median())
     )
-
     categorical_cols = ["Sex", "ChestPainType", "RestingECG", "ExerciseAngina", "ST_Slope"]
     df_encoded = pd.get_dummies(df, columns=categorical_cols, drop_first=False)
-
     y = df_encoded["HeartDisease"]
     X = df_encoded.drop("HeartDisease", axis=1).astype(float)
-
     return X, y, list(X.columns)
 
 
@@ -67,71 +57,72 @@ def load_diabetes():
     return X, y, list(X.columns)
 
 
-# ── HYPERPARAMETER SEARCH SPACES ─────────────────────────────────────────────
 PARAM_GRIDS = {
+    "Logistic Regression": {"C": [0.01, 0.1, 1, 10, 100], "solver": ["lbfgs"], "max_iter": [2000]},
     "Random Forest": {
-        "n_estimators": [100, 200, 300],
-        "max_depth": [None, 5, 10, 15],
-        "min_samples_split": [2, 5, 10],
-        "min_samples_leaf": [1, 2, 4],
+        "n_estimators": [100, 200, 300], "max_depth": [None, 5, 10, 15],
+        "min_samples_split": [2, 5, 10], "min_samples_leaf": [1, 2, 4],
     },
-    "Logistic Regression": {
-        "C": [0.01, 0.1, 1, 10, 100],
-        "solver": ["lbfgs"],
-        "max_iter": [2000],
+    "XGBoost": {"n_estimators": [100, 200, 300], "max_depth": [3, 5, 7], "learning_rate": [0.01, 0.1, 0.2]},
+    "LightGBM": {
+        "n_estimators": [100, 200, 300], "max_depth": [3, 5, 7, -1],
+        "learning_rate": [0.01, 0.05, 0.1], "num_leaves": [15, 31, 63],
     },
-    "SVM": {
-        "C": [0.1, 1, 10],
-        "kernel": ["rbf", "linear"],
-        "gamma": ["scale", "auto"],
+    "CatBoost": {"iterations": [100, 200, 300], "depth": [3, 5, 7], "learning_rate": [0.01, 0.05, 0.1]},
+    "MLP": {
+        "hidden_layer_sizes": [(50,), (100,), (50, 50), (100, 50)],
+        "activation": ["relu", "tanh"], "alpha": [0.0001, 0.001, 0.01],
+        "learning_rate_init": [0.001, 0.01],
     },
-    "XGBoost": {
-        "n_estimators": [100, 200, 300],
-        "max_depth": [3, 5, 7],
-        "learning_rate": [0.01, 0.1, 0.2],
-    },
+    "Stacking": {"final_estimator__C": [0.1, 1, 10]},
 }
+
+
+def build_stacking_model(scale_pos_weight=1.0):
+    estimators = [
+        ("rf", RandomForestClassifier(n_estimators=200, random_state=42, class_weight="balanced")),
+        ("xgb", XGBClassifier(n_estimators=200, random_state=42, eval_metric="logloss",
+                               verbosity=0, scale_pos_weight=scale_pos_weight)),
+        ("lgbm", LGBMClassifier(n_estimators=200, random_state=42, verbose=-1)),
+    ]
+    return StackingClassifier(estimators=estimators, final_estimator=LogisticRegression(max_iter=1000), cv=3)
 
 
 def build_base_models(class_weight_balanced=True, scale_pos_weight=1.0):
     cw = "balanced" if class_weight_balanced else None
     return {
-        "Random Forest": RandomForestClassifier(random_state=42, class_weight=cw),
         "Logistic Regression": LogisticRegression(random_state=42, class_weight=cw),
-        "SVM": SVC(probability=True, random_state=42, class_weight=cw),
-        "XGBoost": XGBClassifier(
-            random_state=42, eval_metric="logloss", verbosity=0,
-            scale_pos_weight=scale_pos_weight
-        ),
+        "Random Forest": RandomForestClassifier(random_state=42, class_weight=cw),
+        "XGBoost": XGBClassifier(random_state=42, eval_metric="logloss", verbosity=0, scale_pos_weight=scale_pos_weight),
+        "LightGBM": LGBMClassifier(random_state=42, verbose=-1, class_weight=cw),
+        "CatBoost": CatBoostClassifier(random_state=42, verbose=0, auto_class_weights="Balanced" if class_weight_balanced else None),
+        "MLP": MLPClassifier(random_state=42, max_iter=2000, early_stopping=True, n_iter_no_change=15),
+        "Stacking": build_stacking_model(scale_pos_weight=scale_pos_weight),
+
+        "Stacking": build_stacking_model(scale_pos_weight=scale_pos_weight),
+        "TabPFN": TabPFNClassifier(random_state=42),
     }
 
 
-# ── TRAIN + TUNE + EVALUATE ───────────────────────────────────────────────────
 def train_models(X, y, condition, use_smote=False):
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42, stratify=y
-    )
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
 
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
 
-    # Handle class imbalance
     if use_smote:
         smote = SMOTE(random_state=42)
         X_train_bal, y_train_bal = smote.fit_resample(X_train, y_train)
         X_train_scaled_bal, y_train_scaled_bal = smote.fit_resample(X_train_scaled, y_train)
-        scale_pos_weight = 1.0  # already balanced by SMOTE
+        scale_pos_weight = 1.0
     else:
         X_train_bal, y_train_bal = X_train, y_train
         X_train_scaled_bal, y_train_scaled_bal = X_train_scaled, y_train
         neg, pos = (y_train == 0).sum(), (y_train == 1).sum()
         scale_pos_weight = neg / pos if pos > 0 else 1.0
 
-    base_models = build_base_models(
-        class_weight_balanced=not use_smote, scale_pos_weight=scale_pos_weight
-    )
-
+    base_models = build_base_models(class_weight_balanced=not use_smote, scale_pos_weight=scale_pos_weight)
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
     results = {}
     best_model_name = None
@@ -139,25 +130,31 @@ def train_models(X, y, condition, use_smote=False):
     fitted_models = {}
 
     for name, base_model in base_models.items():
-        needs_scaling = name in ["Logistic Regression", "SVM"]
+        needs_scaling = name in ["Logistic Regression", "MLP"]
         X_tr = X_train_scaled_bal if needs_scaling else X_train_bal
         y_tr = y_train_scaled_bal if needs_scaling else y_train_bal
         X_te = X_test_scaled if needs_scaling else X_test
 
-        print(f"  Tuning {name} for {condition}...")
-        search = RandomizedSearchCV(
-            base_model, PARAM_GRIDS[name], n_iter=10, cv=cv,
-            scoring="f1", random_state=42, n_jobs=-1
-        )
-        search.fit(X_tr, y_tr)
-        best_est = search.best_estimator_
+        if name == "TabPFN":
+            # TabPFN is a pretrained foundation model (Hollmann et al., 2025, Nature) —
+            # it uses in-context learning and explicitly does not require
+            # dataset-specific hyperparameter tuning. We fit it directly rather
+            # than running RandomizedSearchCV, which would contradict its design.
+            print(f"  Fitting {name} for {condition} (no tuning — foundation model)...")
+            best_est = base_model
+            best_est.fit(X_tr, y_tr)
+            best_params = {"note": "TabPFN uses in-context learning; no hyperparameter search performed by design"}
+        else:
+            print(f"  Tuning {name} for {condition}...")
+            search = RandomizedSearchCV(base_model, PARAM_GRIDS[name], n_iter=10, cv=cv, scoring="f1", random_state=42, n_jobs=-1)
+            search.fit(X_tr, y_tr)
+            best_est = search.best_estimator_
+            best_params = search.best_params_
 
-        # Cross-validated F1 (mean ± std) on training data — robustness check
         cv_scores = cross_val_score(best_est, X_tr, y_tr, cv=cv, scoring="f1", n_jobs=-1)
         cv_f1_mean = round(cv_scores.mean() * 100, 2)
         cv_f1_std = round(cv_scores.std() * 100, 2)
 
-        # Held-out test set evaluation — the honest, unbiased numbers
         preds = best_est.predict(X_te)
         probs = best_est.predict_proba(X_te)[:, 1]
 
@@ -171,18 +168,16 @@ def train_models(X, y, condition, use_smote=False):
         results[name] = {
             "accuracy": acc, "precision": prec, "recall": rec, "f1": f1,
             "roc_auc": auc, "cv_f1_mean": cv_f1_mean, "cv_f1_std": cv_f1_std,
-            "confusion_matrix": cm, "best_params": search.best_params_,
+            "confusion_matrix": cm, "best_params": best_params,
         }
         fitted_models[name] = best_est
 
-        print(f"  [{condition}] {name}: Test Acc={acc}% F1={f1}% AUC={auc}% | "
-              f"CV F1={cv_f1_mean}%±{cv_f1_std}%")
+        print(f"  [{condition}] {name}: Test Acc={acc}% F1={f1}% AUC={auc}% | CV F1={cv_f1_mean}%±{cv_f1_std}%")
 
         if results[name]["roc_auc"] > best_cv_f1:
             best_cv_f1 = results[name]["roc_auc"]
             best_model_name = name
 
-        # Confusion matrix plot
         plt.figure(figsize=(5, 4))
         plt.imshow(cm, cmap="Blues")
         for i in range(2):
@@ -197,10 +192,9 @@ def train_models(X, y, condition, use_smote=False):
         plt.savefig(os.path.join(PLOTS_DIR, f"{condition}_{name.replace(' ', '_')}_cm.png"), dpi=150)
         plt.close()
 
-    # ROC curve — all models overlaid
-    plt.figure(figsize=(7, 6))
+    plt.figure(figsize=(8, 7))
     for name, model in fitted_models.items():
-        needs_scaling = name in ["Logistic Regression", "SVM"]
+        needs_scaling = name in ["Logistic Regression", "MLP"]
         X_te = X_test_scaled if needs_scaling else X_test
         probs = model.predict_proba(X_te)[:, 1]
         fpr, tpr, _ = roc_curve(y_test, probs)
@@ -208,13 +202,30 @@ def train_models(X, y, condition, use_smote=False):
     plt.plot([0, 1], [0, 1], "k--", alpha=0.4)
     plt.xlabel("False Positive Rate")
     plt.ylabel("True Positive Rate")
-    plt.title(f"ROC Curves — {condition.capitalize()}")
-    plt.legend()
+    plt.title(f"ROC Curves — {condition.capitalize()} (All Models)")
+    plt.legend(fontsize=8)
     plt.tight_layout()
     plt.savefig(os.path.join(PLOTS_DIR, f"{condition}_roc_curves.png"), dpi=150)
     plt.close()
 
-    # Save best model
+    plt.figure(figsize=(9, 5))
+    names = list(results.keys())
+    accs = [results[n]["accuracy"] for n in names]
+    f1s = [results[n]["f1"] for n in names]
+    aucs = [results[n]["roc_auc"] for n in names]
+    x = np.arange(len(names))
+    width = 0.25
+    plt.bar(x - width, accs, width, label="Accuracy")
+    plt.bar(x, f1s, width, label="F1 Score")
+    plt.bar(x + width, aucs, width, label="ROC-AUC")
+    plt.xticks(x, names, rotation=30, ha="right")
+    plt.ylabel("Score (%)")
+    plt.title(f"Model Comparison — {condition.capitalize()}")
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(os.path.join(PLOTS_DIR, f"{condition}_model_comparison.png"), dpi=150)
+    plt.close()
+
     best_model = fitted_models[best_model_name]
     pickle.dump(best_model, open(os.path.join(MODELS_DIR, f"{condition}_model.pkl"), "wb"))
     pickle.dump(scaler, open(os.path.join(MODELS_DIR, f"{condition}_scaler.pkl"), "wb"))
@@ -223,22 +234,20 @@ def train_models(X, y, condition, use_smote=False):
     with open(os.path.join(RESULTS_DIR, f"{condition}_results.json"), "w") as f:
         json.dump({"best_model": best_model_name, "results": results}, f, indent=2)
 
-    print(f"\n✅ Best model for {condition}: {best_model_name} (CV F1={best_cv_f1}%)\n")
+    print(f"\n✅ Best model for {condition}: {best_model_name} (AUC={best_cv_f1}%)\n")
     return results, best_model_name
 
 
-# ── PREDICT SINGLE PATIENT ────────────────────────────────────────────────────
 def predict_patient(condition, patient_data: dict):
     model = pickle.load(open(os.path.join(MODELS_DIR, f"{condition}_model.pkl"), "rb"))
     scaler = pickle.load(open(os.path.join(MODELS_DIR, f"{condition}_scaler.pkl"), "rb"))
     features = pickle.load(open(os.path.join(MODELS_DIR, f"{condition}_features.pkl"), "rb"))
 
     df = pd.DataFrame([patient_data])
-    # Align columns to training feature space — fills missing one-hot columns with 0
     df = df.reindex(columns=features, fill_value=0)
 
     model_name = type(model).__name__
-    if model_name in ["LogisticRegression", "SVC"]:
+    if model_name in ["LogisticRegression", "MLPClassifier"]:
         df_scaled = scaler.transform(df)
         prob = model.predict_proba(df_scaled)[0][1]
     else:
@@ -251,10 +260,6 @@ def predict_patient(condition, patient_data: dict):
 
 
 def encode_heart_patient(raw: dict) -> dict:
-    """
-    Converts raw clinical input (e.g. Sex='M', ChestPainType='ATA') into the
-    one-hot encoded dict expected by the trained model.
-    """
     encoded = {
         "Age": raw["Age"], "RestingBP": raw["RestingBP"],
         "Cholesterol": raw["Cholesterol"], "FastingBS": raw["FastingBS"],
@@ -271,19 +276,19 @@ def encode_heart_patient(raw: dict) -> dict:
 
 if __name__ == "__main__":
     print("=" * 60)
-    print("Training Heart Disease models (with hyperparameter tuning)...")
+    print("Training Heart Disease models (7 models, hyperparameter tuning)...")
     print("=" * 60)
     X_h, y_h, _ = load_heart()
     print(f"Heart dataset shape: {X_h.shape}, class balance: {dict(y_h.value_counts())}")
     heart_results, heart_best = train_models(X_h, y_h, "heart", use_smote=False)
 
     print("=" * 60)
-    print("Training Diabetes models (with SMOTE + hyperparameter tuning)...")
+    print("Training Diabetes models (7 models, SMOTE + hyperparameter tuning)...")
     print("=" * 60)
     X_d, y_d, _ = load_diabetes()
     print(f"Diabetes dataset shape: {X_d.shape}, class balance: {dict(y_d.value_counts())}")
     diabetes_results, diabetes_best = train_models(X_d, y_d, "diabetes", use_smote=True)
 
     print("=" * 60)
-    print("ALL MODELS TRAINED, TUNED, AND EVALUATED")
+    print("ALL 14 MODEL RUNS TRAINED, TUNED, AND EVALUATED")
     print("=" * 60)

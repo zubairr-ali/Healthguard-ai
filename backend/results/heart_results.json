@@ -1,6 +1,30 @@
 {
-  "best_model": "XGBoost",
+  "best_model": "TabPFN",
   "results": {
+    "Logistic Regression": {
+      "accuracy": 89.13,
+      "precision": 91.84,
+      "recall": 88.24,
+      "f1": 90.0,
+      "roc_auc": 93.39,
+      "cv_f1_mean": 85.98,
+      "cv_f1_std": 1.99,
+      "confusion_matrix": [
+        [
+          74,
+          8
+        ],
+        [
+          12,
+          90
+        ]
+      ],
+      "best_params": {
+        "solver": "lbfgs",
+        "max_iter": 2000,
+        "C": 0.01
+      }
+    },
     "Random Forest": {
       "accuracy": 90.76,
       "precision": 90.48,
@@ -26,54 +50,6 @@
         "max_depth": 10
       }
     },
-    "Logistic Regression": {
-      "accuracy": 89.13,
-      "precision": 91.84,
-      "recall": 88.24,
-      "f1": 90.0,
-      "roc_auc": 93.39,
-      "cv_f1_mean": 85.98,
-      "cv_f1_std": 1.99,
-      "confusion_matrix": [
-        [
-          74,
-          8
-        ],
-        [
-          12,
-          90
-        ]
-      ],
-      "best_params": {
-        "solver": "lbfgs",
-        "max_iter": 2000,
-        "C": 0.01
-      }
-    },
-    "SVM": {
-      "accuracy": 84.78,
-      "precision": 86.27,
-      "recall": 86.27,
-      "f1": 86.27,
-      "roc_auc": 93.13,
-      "cv_f1_mean": 86.79,
-      "cv_f1_std": 2.97,
-      "confusion_matrix": [
-        [
-          68,
-          14
-        ],
-        [
-          14,
-          88
-        ]
-      ],
-      "best_params": {
-        "kernel": "rbf",
-        "gamma": "scale",
-        "C": 0.1
-      }
-    },
     "XGBoost": {
       "accuracy": 88.59,
       "precision": 90.1,
@@ -96,6 +72,126 @@
         "n_estimators": 100,
         "max_depth": 7,
         "learning_rate": 0.2
+      }
+    },
+    "LightGBM": {
+      "accuracy": 90.22,
+      "precision": 92.0,
+      "recall": 90.2,
+      "f1": 91.09,
+      "roc_auc": 95.07,
+      "cv_f1_mean": 88.9,
+      "cv_f1_std": 1.03,
+      "confusion_matrix": [
+        [
+          74,
+          8
+        ],
+        [
+          10,
+          92
+        ]
+      ],
+      "best_params": {
+        "num_leaves": 63,
+        "n_estimators": 200,
+        "max_depth": 3,
+        "learning_rate": 0.1
+      }
+    },
+    "CatBoost": {
+      "accuracy": 91.3,
+      "precision": 93.0,
+      "recall": 91.18,
+      "f1": 92.08,
+      "roc_auc": 94.57,
+      "cv_f1_mean": 89.5,
+      "cv_f1_std": 2.13,
+      "confusion_matrix": [
+        [
+          75,
+          7
+        ],
+        [
+          9,
+          93
+        ]
+      ],
+      "best_params": {
+        "learning_rate": 0.05,
+        "iterations": 300,
+        "depth": 5
+      }
+    },
+    "MLP": {
+      "accuracy": 86.96,
+      "precision": 86.11,
+      "recall": 91.18,
+      "f1": 88.57,
+      "roc_auc": 92.1,
+      "cv_f1_mean": 85.81,
+      "cv_f1_std": 1.68,
+      "confusion_matrix": [
+        [
+          67,
+          15
+        ],
+        [
+          9,
+          93
+        ]
+      ],
+      "best_params": {
+        "learning_rate_init": 0.001,
+        "hidden_layer_sizes": [
+          50
+        ],
+        "alpha": 0.01,
+        "activation": "tanh"
+      }
+    },
+    "Stacking": {
+      "accuracy": 89.13,
+      "precision": 90.2,
+      "recall": 90.2,
+      "f1": 90.2,
+      "roc_auc": 94.57,
+      "cv_f1_mean": 88.72,
+      "cv_f1_std": 1.75,
+      "confusion_matrix": [
+        [
+          72,
+          10
+        ],
+        [
+          10,
+          92
+        ]
+      ],
+      "best_params": {
+        "final_estimator__C": 0.1
+      }
+    },
+    "TabPFN": {
+      "accuracy": 92.39,
+      "precision": 93.14,
+      "recall": 93.14,
+      "f1": 93.14,
+      "roc_auc": 95.84,
+      "cv_f1_mean": 89.1,
+      "cv_f1_std": 2.57,
+      "confusion_matrix": [
+        [
+          75,
+          7
+        ],
+        [
+          7,
+          95
+        ]
+      ],
+      "best_params": {
+        "note": "TabPFN uses in-context learning; no hyperparameter search performed by design"
       }
     }
   }

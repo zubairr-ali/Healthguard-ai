@@ -1,6 +1,30 @@
 {
   "best_model": "XGBoost",
   "results": {
+    "Logistic Regression": {
+      "accuracy": 71.43,
+      "precision": 58.06,
+      "recall": 66.67,
+      "f1": 62.07,
+      "roc_auc": 81.11,
+      "cv_f1_mean": 73.01,
+      "cv_f1_std": 3.41,
+      "confusion_matrix": [
+        [
+          74,
+          26
+        ],
+        [
+          18,
+          36
+        ]
+      ],
+      "best_params": {
+        "solver": "lbfgs",
+        "max_iter": 2000,
+        "C": 10
+      }
+    },
     "Random Forest": {
       "accuracy": 73.38,
       "precision": 61.02,
@@ -26,54 +50,6 @@
         "max_depth": 15
       }
     },
-    "Logistic Regression": {
-      "accuracy": 71.43,
-      "precision": 58.06,
-      "recall": 66.67,
-      "f1": 62.07,
-      "roc_auc": 81.11,
-      "cv_f1_mean": 73.01,
-      "cv_f1_std": 3.41,
-      "confusion_matrix": [
-        [
-          74,
-          26
-        ],
-        [
-          18,
-          36
-        ]
-      ],
-      "best_params": {
-        "solver": "lbfgs",
-        "max_iter": 2000,
-        "C": 10
-      }
-    },
-    "SVM": {
-      "accuracy": 70.78,
-      "precision": 57.38,
-      "recall": 64.81,
-      "f1": 60.87,
-      "roc_auc": 79.93,
-      "cv_f1_mean": 82.14,
-      "cv_f1_std": 2.14,
-      "confusion_matrix": [
-        [
-          74,
-          26
-        ],
-        [
-          19,
-          35
-        ]
-      ],
-      "best_params": {
-        "kernel": "rbf",
-        "gamma": "scale",
-        "C": 10
-      }
-    },
     "XGBoost": {
       "accuracy": 77.27,
       "precision": 66.67,
@@ -96,6 +72,127 @@
         "n_estimators": 100,
         "max_depth": 7,
         "learning_rate": 0.2
+      }
+    },
+    "LightGBM": {
+      "accuracy": 72.08,
+      "precision": 59.02,
+      "recall": 66.67,
+      "f1": 62.61,
+      "roc_auc": 81.19,
+      "cv_f1_mean": 81.25,
+      "cv_f1_std": 2.55,
+      "confusion_matrix": [
+        [
+          75,
+          25
+        ],
+        [
+          18,
+          36
+        ]
+      ],
+      "best_params": {
+        "num_leaves": 31,
+        "n_estimators": 200,
+        "max_depth": -1,
+        "learning_rate": 0.05
+      }
+    },
+    "CatBoost": {
+      "accuracy": 73.38,
+      "precision": 61.02,
+      "recall": 66.67,
+      "f1": 63.72,
+      "roc_auc": 81.57,
+      "cv_f1_mean": 82.01,
+      "cv_f1_std": 2.3,
+      "confusion_matrix": [
+        [
+          77,
+          23
+        ],
+        [
+          18,
+          36
+        ]
+      ],
+      "best_params": {
+        "learning_rate": 0.05,
+        "iterations": 300,
+        "depth": 5
+      }
+    },
+    "MLP": {
+      "accuracy": 72.73,
+      "precision": 60.71,
+      "recall": 62.96,
+      "f1": 61.82,
+      "roc_auc": 81.17,
+      "cv_f1_mean": 83.15,
+      "cv_f1_std": 3.25,
+      "confusion_matrix": [
+        [
+          78,
+          22
+        ],
+        [
+          20,
+          34
+        ]
+      ],
+      "best_params": {
+        "learning_rate_init": 0.001,
+        "hidden_layer_sizes": [
+          50,
+          50
+        ],
+        "alpha": 0.0001,
+        "activation": "relu"
+      }
+    },
+    "Stacking": {
+      "accuracy": 74.03,
+      "precision": 63.46,
+      "recall": 61.11,
+      "f1": 62.26,
+      "roc_auc": 81.87,
+      "cv_f1_mean": 82.75,
+      "cv_f1_std": 2.65,
+      "confusion_matrix": [
+        [
+          81,
+          19
+        ],
+        [
+          21,
+          33
+        ]
+      ],
+      "best_params": {
+        "final_estimator__C": 10
+      }
+    },
+    "TabPFN": {
+      "accuracy": 74.68,
+      "precision": 65.31,
+      "recall": 59.26,
+      "f1": 62.14,
+      "roc_auc": 81.61,
+      "cv_f1_mean": 84.46,
+      "cv_f1_std": 1.91,
+      "confusion_matrix": [
+        [
+          83,
+          17
+        ],
+        [
+          22,
+          32
+        ]
+      ],
+      "best_params": {
+        "note": "TabPFN uses in-context learning; no hyperparameter search performed by design"
       }
     }
   }
