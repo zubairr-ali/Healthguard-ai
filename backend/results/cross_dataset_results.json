@@ -1,0 +1,199 @@
+{
+  "seed": 42,
+  "tabpfn_max_train": 5000,
+  "results": {
+    "Pima <-> Frankfurt": {
+      "status": "ABORTED_CONTAMINATED",
+      "pct_of_source_in_target": 95.57,
+      "pct_of_target_in_source": 99.05,
+      "threshold_pct": 5.0,
+      "reason": "Datasets share rows and cannot be treated as independent cohorts. Any external-validation metric computed between them reflects memorisation of duplicated patients."
+    },
+    "Heart -> Cardio": {
+      "source": "Heart",
+      "target": "Cardio",
+      "n_source": 918,
+      "n_target": 69771,
+      "features": [
+        "age",
+        "sex",
+        "systolic_bp",
+        "chol_cat",
+        "gluc_elevated"
+      ],
+      "models": {
+        "Logistic Regression": {
+          "internal_cv_auc": 0.7606,
+          "external": {
+            "roc_auc": 0.6276,
+            "accuracy": 0.5689,
+            "f1": 0.4307,
+            "sensitivity": 0.3263,
+            "specificity": 0.8111,
+            "mcc": 0.1571,
+            "brier": 0.2788
+          },
+          "auc_degradation": 0.133
+        },
+        "Random Forest": {
+          "internal_cv_auc": 0.6994,
+          "external": {
+            "roc_auc": 0.6103,
+            "accuracy": 0.5429,
+            "f1": 0.3881,
+            "sensitivity": 0.2901,
+            "specificity": 0.7954,
+            "mcc": 0.0991,
+            "brier": 0.3131
+          },
+          "auc_degradation": 0.0891
+        },
+        "XGBoost": {
+          "internal_cv_auc": 0.7411,
+          "external": {
+            "roc_auc": 0.6133,
+            "accuracy": 0.5371,
+            "f1": 0.3583,
+            "sensitivity": 0.2587,
+            "specificity": 0.8152,
+            "mcc": 0.0889,
+            "brier": 0.345
+          },
+          "auc_degradation": 0.1278
+        },
+        "LightGBM": {
+          "internal_cv_auc": 0.7208,
+          "external": {
+            "roc_auc": 0.6019,
+            "accuracy": 0.5421,
+            "f1": 0.357,
+            "sensitivity": 0.2544,
+            "specificity": 0.8294,
+            "mcc": 0.1024,
+            "brier": 0.3638
+          },
+          "auc_degradation": 0.1189
+        },
+        "CatBoost": {
+          "internal_cv_auc": 0.7481,
+          "external": {
+            "roc_auc": 0.6222,
+            "accuracy": 0.549,
+            "f1": 0.3459,
+            "sensitivity": 0.2387,
+            "specificity": 0.8588,
+            "mcc": 0.1242,
+            "brier": 0.3186
+          },
+          "auc_degradation": 0.1259
+        },
+        "TabPFN": {
+          "internal_cv_auc": 0.7627,
+          "external": {
+            "roc_auc": 0.6342,
+            "accuracy": 0.5612,
+            "f1": 0.3874,
+            "sensitivity": 0.2777,
+            "specificity": 0.8443,
+            "mcc": 0.1481,
+            "brier": 0.2916
+          },
+          "auc_degradation": 0.1285
+        }
+      }
+    },
+    "Cardio -> Heart": {
+      "source": "Cardio",
+      "target": "Heart",
+      "n_source": 69771,
+      "n_target": 918,
+      "features": [
+        "age",
+        "sex",
+        "systolic_bp",
+        "chol_cat",
+        "gluc_elevated"
+      ],
+      "models": {
+        "Logistic Regression": {
+          "internal_cv_auc": 0.7884,
+          "external": {
+            "roc_auc": 0.5881,
+            "accuracy": 0.5577,
+            "f1": 0.642,
+            "sensitivity": 0.7165,
+            "specificity": 0.361,
+            "mcc": 0.0827,
+            "brier": 0.2792
+          },
+          "auc_degradation": 0.2003
+        },
+        "Random Forest": {
+          "internal_cv_auc": 0.719,
+          "external": {
+            "roc_auc": 0.5117,
+            "accuracy": 0.5251,
+            "f1": 0.6036,
+            "sensitivity": 0.6535,
+            "specificity": 0.3659,
+            "mcc": 0.0202,
+            "brier": 0.3564
+          },
+          "auc_degradation": 0.2073
+        },
+        "XGBoost": {
+          "internal_cv_auc": 0.7961,
+          "external": {
+            "roc_auc": 0.5883,
+            "accuracy": 0.5937,
+            "f1": 0.6899,
+            "sensitivity": 0.8169,
+            "specificity": 0.3171,
+            "mcc": 0.1553,
+            "brier": 0.2767
+          },
+          "auc_degradation": 0.2078
+        },
+        "LightGBM": {
+          "internal_cv_auc": 0.7948,
+          "external": {
+            "roc_auc": 0.5449,
+            "accuracy": 0.5272,
+            "f1": 0.6206,
+            "sensitivity": 0.6988,
+            "specificity": 0.3146,
+            "mcc": 0.0145,
+            "brier": 0.301
+          },
+          "auc_degradation": 0.2499
+        },
+        "CatBoost": {
+          "internal_cv_auc": 0.798,
+          "external": {
+            "roc_auc": 0.5251,
+            "accuracy": 0.5283,
+            "f1": 0.6302,
+            "sensitivity": 0.7264,
+            "specificity": 0.2829,
+            "mcc": 0.0103,
+            "brier": 0.303
+          },
+          "auc_degradation": 0.2729
+        },
+        "TabPFN": {
+          "internal_cv_auc": 0.7957,
+          "external": {
+            "roc_auc": 0.5803,
+            "accuracy": 0.5414,
+            "f1": 0.6399,
+            "sensitivity": 0.7362,
+            "specificity": 0.3,
+            "mcc": 0.0401,
+            "brier": 0.2965
+          },
+          "auc_degradation": 0.2154
+        }
+      }
+    }
+  }
+}
