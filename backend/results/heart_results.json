@@ -27,27 +27,27 @@
     },
     "Random Forest": {
       "accuracy": 90.76,
-      "precision": 90.48,
-      "recall": 93.14,
-      "f1": 91.79,
-      "roc_auc": 93.53,
-      "cv_f1_mean": 87.69,
-      "cv_f1_std": 2.85,
+      "precision": 89.72,
+      "recall": 94.12,
+      "f1": 91.87,
+      "roc_auc": 94.02,
+      "cv_f1_mean": 87.67,
+      "cv_f1_std": 2.41,
       "confusion_matrix": [
         [
-          72,
-          10
+          71,
+          11
         ],
         [
-          7,
-          95
+          6,
+          96
         ]
       ],
       "best_params": {
         "n_estimators": 300,
-        "min_samples_split": 5,
-        "min_samples_leaf": 4,
-        "max_depth": 10
+        "min_samples_split": 2,
+        "min_samples_leaf": 1,
+        "max_depth": 15
       }
     },
     "XGBoost": {
@@ -124,21 +124,21 @@
       }
     },
     "MLP": {
-      "accuracy": 86.96,
-      "precision": 86.11,
-      "recall": 91.18,
-      "f1": 88.57,
-      "roc_auc": 92.1,
-      "cv_f1_mean": 85.81,
-      "cv_f1_std": 1.68,
+      "accuracy": 89.13,
+      "precision": 91.0,
+      "recall": 89.22,
+      "f1": 90.1,
+      "roc_auc": 93.96,
+      "cv_f1_mean": 85.99,
+      "cv_f1_std": 2.35,
       "confusion_matrix": [
         [
-          67,
-          15
+          73,
+          9
         ],
         [
-          9,
-          93
+          11,
+          91
         ]
       ],
       "best_params": {
@@ -155,9 +155,9 @@
       "precision": 90.2,
       "recall": 90.2,
       "f1": 90.2,
-      "roc_auc": 94.57,
-      "cv_f1_mean": 88.72,
-      "cv_f1_std": 1.75,
+      "roc_auc": 94.44,
+      "cv_f1_mean": 88.47,
+      "cv_f1_std": 1.81,
       "confusion_matrix": [
         [
           72,
@@ -191,7 +191,73 @@
         ]
       ],
       "best_params": {
-        "note": "TabPFN uses in-context learning; no hyperparameter search performed by design"
+        "note": "TabPFN uses in-context learning; no hyperparameter search or epoch-based training is performed by design"
+      }
+    },
+    "FT-Transformer": {
+      "accuracy": 89.13,
+      "precision": 87.96,
+      "recall": 93.14,
+      "f1": 90.48,
+      "roc_auc": 93.79,
+      "cv_f1_mean": 86.53,
+      "cv_f1_std": 2.5,
+      "confusion_matrix": [
+        [
+          69,
+          13
+        ],
+        [
+          7,
+          95
+        ]
+      ],
+      "best_params": {
+        "note": "FT-Transformer is fit directly with fixed architecture/optimizer hyperparameters (no RandomizedSearchCV); convergence is checked via a held-out validation split with patience-based early stopping [early stopping at epoch 31]"
+      }
+    },
+    "TabTransformer": {
+      "accuracy": 85.33,
+      "precision": 83.19,
+      "recall": 92.16,
+      "f1": 87.44,
+      "roc_auc": 91.3,
+      "cv_f1_mean": 86.51,
+      "cv_f1_std": 2.01,
+      "confusion_matrix": [
+        [
+          63,
+          19
+        ],
+        [
+          8,
+          94
+        ]
+      ],
+      "best_params": {
+        "note": "TabTransformer is fit directly with fixed architecture/optimizer hyperparameters (no RandomizedSearchCV); convergence is checked via a held-out validation split with patience-based early stopping [early stopping at epoch 17]"
+      }
+    },
+    "TabNet": {
+      "accuracy": 85.33,
+      "precision": 87.88,
+      "recall": 85.29,
+      "f1": 86.57,
+      "roc_auc": 90.36,
+      "cv_f1_mean": 85.41,
+      "cv_f1_std": 3.47,
+      "confusion_matrix": [
+        [
+          70,
+          12
+        ],
+        [
+          15,
+          87
+        ]
+      ],
+      "best_params": {
+        "note": "TabNet is fit directly with fixed architecture/optimizer hyperparameters (no RandomizedSearchCV); convergence is checked via a held-out validation split with patience-based early stopping [early stopping at epoch 56]"
       }
     }
   }

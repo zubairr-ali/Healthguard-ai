@@ -8,6 +8,10 @@ from xgboost import XGBClassifier
 from lightgbm import LGBMClassifier
 from catboost import CatBoostClassifier
 from tabpfn import TabPFNClassifier
+from deep_tabular_models import (
+    split_categorical_continuous, FTTransformerClassifier, TabTransformerClassifier,
+    make_tabnet, fit_tabnet_with_early_stopping, manual_cv_f1,
+)
 from sklearn.metrics import (
     accuracy_score, precision_score, recall_score, f1_score,
     confusion_matrix, roc_auc_score, roc_curve
@@ -88,8 +92,15 @@ def build_stacking_model(scale_pos_weight=1.0):
     return StackingClassifier(estimators=estimators, final_estimator=LogisticRegression(max_iter=1000), cv=3)
 
 
-def build_base_models(class_weight_balanced=True, scale_pos_weight=1.0):
+# Models fitted directly (no RandomizedSearchCV) because they are either a pretrained
+# foundation model (TabPFN) or a neural net where grid search would mean training
+# dozens of networks — both fit once with sensible defaults instead.
+NO_TUNING_MODELS = {"TabPFN", "TabNet", "FT-Transformer", "TabTransformer"}
+
+
+def build_base_models(X, class_weight_balanced=True, scale_pos_weight=1.0):
     cw = "balanced" if class_weight_balanced else None
+    categ_idx, cont_idx, cardinalities = split_categorical_continuous(np.asarray(X))
     return {
         "Logistic Regression": LogisticRegression(random_state=42, class_weight=cw),
         "Random Forest": RandomForestClassifier(random_state=42, class_weight=cw),
@@ -98,9 +109,16 @@ def build_base_models(class_weight_balanced=True, scale_pos_weight=1.0):
         "CatBoost": CatBoostClassifier(random_state=42, verbose=0, auto_class_weights="Balanced" if class_weight_balanced else None),
         "MLP": MLPClassifier(random_state=42, max_iter=2000, early_stopping=True, n_iter_no_change=15),
         "Stacking": build_stacking_model(scale_pos_weight=scale_pos_weight),
-
-        "Stacking": build_stacking_model(scale_pos_weight=scale_pos_weight),
         "TabPFN": TabPFNClassifier(random_state=42),
+        "FT-Transformer": FTTransformerClassifier(
+            categ_idx=categ_idx, cont_idx=cont_idx, cardinalities=cardinalities,
+            dim=32, depth=3, heads=4, max_epochs=200, patience=10, batch_size=32,
+        ),
+        "TabTransformer": TabTransformerClassifier(
+            categ_idx=categ_idx, cont_idx=cont_idx, cardinalities=cardinalities,
+            dim=32, depth=3, heads=4, max_epochs=200, patience=10, batch_size=32,
+        ),
+        "TabNet": make_tabnet(categ_idx, cardinalities),
     }
 
 
@@ -122,7 +140,7 @@ def train_models(X, y, condition, use_smote=False):
         neg, pos = (y_train == 0).sum(), (y_train == 1).sum()
         scale_pos_weight = neg / pos if pos > 0 else 1.0
 
-    base_models = build_base_models(class_weight_balanced=not use_smote, scale_pos_weight=scale_pos_weight)
+    base_models = build_base_models(X, class_weight_balanced=not use_smote, scale_pos_weight=scale_pos_weight)
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
     results = {}
     best_model_name = None
@@ -135,15 +153,33 @@ def train_models(X, y, condition, use_smote=False):
         y_tr = y_train_scaled_bal if needs_scaling else y_train_bal
         X_te = X_test_scaled if needs_scaling else X_test
 
-        if name == "TabPFN":
-            # TabPFN is a pretrained foundation model (Hollmann et al., 2025, Nature) —
-            # it uses in-context learning and explicitly does not require
-            # dataset-specific hyperparameter tuning. We fit it directly rather
-            # than running RandomizedSearchCV, which would contradict its design.
-            print(f"  Fitting {name} for {condition} (no tuning — foundation model)...")
+        if name in NO_TUNING_MODELS:
+            # TabPFN is a pretrained foundation model that uses in-context learning;
+            # the other three are neural nets where a hyperparameter grid search would
+            # mean training dozens of networks — all four are fit once instead of via
+            # RandomizedSearchCV. FT-Transformer/TabTransformer/TabNet all hold out a
+            # validation split internally and use patience-based early stopping on
+            # validation loss, so "fixed hyperparameters" here means the architecture/
+            # optimizer settings, not the number of epochs actually trained.
+            note = "foundation model" if name == "TabPFN" else "neural tabular model"
+            print(f"  Fitting {name} for {condition} (no tuning — {note})...")
             best_est = base_model
-            best_est.fit(X_tr, y_tr)
-            best_params = {"note": "TabPFN uses in-context learning; no hyperparameter search performed by design"}
+            if name == "TabNet":
+                fit_tabnet_with_early_stopping(best_est, X_tr, y_tr, max_epochs=300, patience=20)
+            else:
+                best_est.fit(X_tr, y_tr)
+            convergence = ""
+            if hasattr(best_est, "n_epochs_trained_"):
+                stop_reason = "early stopping" if best_est.stopped_early_ else "hit max_epochs"
+                convergence = f" [{stop_reason} at epoch {best_est.n_epochs_trained_}]"
+            print(f"  [{condition}] {name} converged{convergence}")
+            if name == "TabPFN":
+                best_params = {"note": "TabPFN uses in-context learning; no hyperparameter search or "
+                                        "epoch-based training is performed by design"}
+            else:
+                best_params = {"note": f"{name} is fit directly with fixed architecture/optimizer hyperparameters "
+                                        f"(no RandomizedSearchCV); convergence is checked via a held-out validation "
+                                        f"split with patience-based early stopping{convergence}"}
         else:
             print(f"  Tuning {name} for {condition}...")
             search = RandomizedSearchCV(base_model, PARAM_GRIDS[name], n_iter=10, cv=cv, scoring="f1", random_state=42, n_jobs=-1)
@@ -151,7 +187,23 @@ def train_models(X, y, condition, use_smote=False):
             best_est = search.best_estimator_
             best_params = search.best_params_
 
-        cv_scores = cross_val_score(best_est, X_tr, y_tr, cv=cv, scoring="f1", n_jobs=-1)
+        if name == "TabNet":
+            # TabNetClassifier's __init__ mutates cat_emb_dim, which breaks sklearn's
+            # clone() — cross_val_score relies on clone(), so fold estimators are
+            # rebuilt manually instead.
+            cat_idxs, cat_dims = best_est.cat_idxs, best_est.cat_dims
+            cv_scores = manual_cv_f1(
+                lambda: make_tabnet(cat_idxs, cat_dims),
+                X_tr, y_tr, cv,
+                fit_fn=lambda model, X_fold, y_fold: fit_tabnet_with_early_stopping(
+                    model, X_fold, y_fold, max_epochs=300, patience=20,
+                ),
+            )
+        else:
+            # Neural/foundation models run sequentially (n_jobs=1) — parallel
+            # multiprocess CV would spawn duplicate torch/foundation-model processes.
+            cv_n_jobs = 1 if name in NO_TUNING_MODELS else -1
+            cv_scores = cross_val_score(best_est, X_tr, y_tr, cv=cv, scoring="f1", n_jobs=cv_n_jobs)
         cv_f1_mean = round(cv_scores.mean() * 100, 2)
         cv_f1_std = round(cv_scores.std() * 100, 2)
 
@@ -234,7 +286,7 @@ def train_models(X, y, condition, use_smote=False):
     with open(os.path.join(RESULTS_DIR, f"{condition}_results.json"), "w") as f:
         json.dump({"best_model": best_model_name, "results": results}, f, indent=2)
 
-    print(f"\n✅ Best model for {condition}: {best_model_name} (AUC={best_cv_f1}%)\n")
+    print(f"\n[OK] Best model for {condition}: {best_model_name} (AUC={best_cv_f1}%)\n")
     return results, best_model_name
 
 
@@ -251,7 +303,7 @@ def predict_patient(condition, patient_data: dict):
         df_scaled = scaler.transform(df)
         prob = model.predict_proba(df_scaled)[0][1]
     else:
-        prob = model.predict_proba(df)[0][1]
+        prob = model.predict_proba(df.values)[0][1]
 
     risk_score = round(float(prob) * 100, 1)
     risk_level = "High" if risk_score >= 70 else "Medium" if risk_score >= 40 else "Low"
@@ -276,19 +328,19 @@ def encode_heart_patient(raw: dict) -> dict:
 
 if __name__ == "__main__":
     print("=" * 60)
-    print("Training Heart Disease models (7 models, hyperparameter tuning)...")
+    print("Training Heart Disease models (10 models, hyperparameter tuning)...")
     print("=" * 60)
     X_h, y_h, _ = load_heart()
     print(f"Heart dataset shape: {X_h.shape}, class balance: {dict(y_h.value_counts())}")
     heart_results, heart_best = train_models(X_h, y_h, "heart", use_smote=False)
 
     print("=" * 60)
-    print("Training Diabetes models (7 models, SMOTE + hyperparameter tuning)...")
+    print("Training Diabetes models (10 models, SMOTE + hyperparameter tuning)...")
     print("=" * 60)
     X_d, y_d, _ = load_diabetes()
     print(f"Diabetes dataset shape: {X_d.shape}, class balance: {dict(y_d.value_counts())}")
     diabetes_results, diabetes_best = train_models(X_d, y_d, "diabetes", use_smote=True)
 
     print("=" * 60)
-    print("ALL 14 MODEL RUNS TRAINED, TUNED, AND EVALUATED")
+    print("ALL 20 MODEL RUNS TRAINED, TUNED, AND EVALUATED")
     print("=" * 60)
