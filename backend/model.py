@@ -328,19 +328,19 @@ def encode_heart_patient(raw: dict) -> dict:
 
 if __name__ == "__main__":
     print("=" * 60)
-    print("Training Heart Disease models (10 models, hyperparameter tuning)...")
+    print("Training Heart Disease models (11 models, hyperparameter tuning)...")
     print("=" * 60)
     X_h, y_h, _ = load_heart()
     print(f"Heart dataset shape: {X_h.shape}, class balance: {dict(y_h.value_counts())}")
     heart_results, heart_best = train_models(X_h, y_h, "heart", use_smote=False)
 
     print("=" * 60)
-    print("Training Diabetes models (10 models, SMOTE + hyperparameter tuning)...")
+    print("Training Diabetes models (11 models, SMOTE + hyperparameter tuning)...")
     print("=" * 60)
     X_d, y_d, _ = load_diabetes()
     print(f"Diabetes dataset shape: {X_d.shape}, class balance: {dict(y_d.value_counts())}")
     diabetes_results, diabetes_best = train_models(X_d, y_d, "diabetes", use_smote=True)
 
     print("=" * 60)
-    print("ALL 20 MODEL RUNS TRAINED, TUNED, AND EVALUATED")
+    print("ALL 22 MODEL RUNS TRAINED, TUNED, AND EVALUATED")
     print("=" * 60)

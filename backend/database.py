@@ -30,7 +30,7 @@ def init_db():
     """)
     conn.commit()
     conn.close()
-    print("✅ Database initialised.")
+    print("[OK] Database initialised.")
 
 
 def save_prediction(condition, patient_data, risk_score,

@@ -4,8 +4,9 @@ from pydantic import BaseModel
 from typing import Optional
 import pandas as pd
 import json
+import os
 
-from model import load_heart, load_diabetes, predict_patient, train_models, encode_heart_patient
+from model import load_heart, load_diabetes, predict_patient, encode_heart_patient, RESULTS_DIR
 
 def clean_json(obj):
     """Recursively convert numpy types to plain Python types for JSON serialization."""
@@ -42,7 +43,7 @@ app.add_middleware(
 @app.on_event("startup")
 async def startup():
     init_db()
-    print("✅ HealthGuard AI API started.")
+    print("[OK] HealthGuard AI API started.")
 
 
 # ── Request models ───────────────────────────────────────────────────────────
@@ -181,24 +182,24 @@ def global_shap(condition: str):
 # ── Model comparison endpoint ────────────────────────────────────────────────
 @app.get("/api/models/{condition}")
 def model_comparison(condition: str):
+    if condition not in ("heart", "diabetes"):
+        raise HTTPException(status_code=400, detail="Invalid condition")
+
+    results_path = os.path.join(RESULTS_DIR, f"{condition}_results.json")
     try:
-        if condition == "heart":
-            X, y, _ = load_heart()
-            results, best = train_models(X, y, condition)
-        elif condition == "diabetes":
-            X, y, _ = load_diabetes()
-            results, best = train_models(X, y, condition)
-        else:
-            raise HTTPException(status_code=400, detail="Invalid condition")
+        with open(results_path) as f:
+            saved = json.load(f)
+    except FileNotFoundError:
+        raise HTTPException(
+            status_code=503,
+            detail=f"No saved results for '{condition}' yet — run model.py's training pipeline first.",
+        )
 
-        return {
-            "condition": condition,
-            "best_model": best,
-            "results": results
-        }
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return {
+        "condition": condition,
+        "best_model": saved["best_model"],
+        "results": saved["results"],
+    }
 
 
 # ── History endpoint ─────────────────────────────────────────────────────────
