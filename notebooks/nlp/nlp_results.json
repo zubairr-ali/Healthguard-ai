@@ -1,0 +1,325 @@
+{
+  "phase": "DistilBERT vs classical NLP baselines",
+  "dataset": "niyarrbarman/symptom2disease",
+  "n_total": 1153,
+  "n_train": 807,
+  "n_val": 173,
+  "n_test": 173,
+  "n_classes": 24,
+  "max_len": 128,
+  "seed": 42,
+  "headline_metric": "macro_f1",
+  "results": {
+    "TF-IDF + LogReg": {
+      "accuracy": 0.9595,
+      "macro_f1": 0.9626,
+      "weighted_f1": 0.9597,
+      "train_time_s": 0.9,
+      "trainable_params": 62184,
+      "inference_ms_per_sample": 0.131,
+      "worst_class_f1": 0.7143,
+      "worst_class": "Dengue"
+    },
+    "TF-IDF + LinearSVM": {
+      "accuracy": 0.9653,
+      "macro_f1": 0.9675,
+      "weighted_f1": 0.9652,
+      "train_time_s": 0.1,
+      "trainable_params": 62184,
+      "inference_ms_per_sample": 0.039,
+      "worst_class_f1": 0.7143,
+      "worst_class": "Dengue"
+    },
+    "Frozen DistilBERT + LR": {
+      "accuracy": 0.9422,
+      "macro_f1": 0.945,
+      "weighted_f1": 0.9427,
+      "train_time_s": 12.4,
+      "trainable_params": 18432,
+      "inference_ms_per_sample": 0.019,
+      "worst_class_f1": 0.7778,
+      "worst_class": "Dengue"
+    },
+    "Fine-tuned DistilBERT": {
+      "accuracy": 0.8844,
+      "macro_f1": 0.8853,
+      "weighted_f1": 0.8792,
+      "train_time_s": 63.8,
+      "trainable_params": 66971928,
+      "inference_ms_per_sample": 3.642,
+      "worst_class_f1": 0.4444,
+      "worst_class": "drug reaction"
+    },
+    "DistilBERT (converged)": {
+      "accuracy": 0.9827,
+      "macro_f1": 0.9835,
+      "weighted_f1": 0.9821,
+      "train_time_s": 159.9,
+      "trainable_params": 66971928,
+      "inference_ms_per_sample": 4.387,
+      "worst_class_f1": 0.8571,
+      "worst_class": "Dengue"
+    }
+  },
+  "note": "Fine-tuned DistilBERT (6 fixed epochs) was under-trained; DistilBERT (converged) used early stopping on val macro F1. Both retained deliberately to document the methodology.",
+  "distilbert_history_undertrained": [
+    {
+      "epoch": 1,
+      "train_loss": 3.155888239542643,
+      "val_macro_f1": 0.203023828023828
+    },
+    {
+      "epoch": 2,
+      "train_loss": 2.670241496142219,
+      "val_macro_f1": 0.7325282388033937
+    },
+    {
+      "epoch": 3,
+      "train_loss": 1.991349781260771,
+      "val_macro_f1": 0.8320109077655516
+    },
+    {
+      "epoch": 4,
+      "train_loss": 1.5567586936202704,
+      "val_macro_f1": 0.8588815120065121
+    },
+    {
+      "epoch": 5,
+      "train_loss": 1.3371037735658533,
+      "val_macro_f1": 0.8962350966027436
+    },
+    {
+      "epoch": 6,
+      "train_loss": 1.274090002564823,
+      "val_macro_f1": 0.90270872237784
+    }
+  ],
+  "distilbert_history_converged": [
+    {
+      "epoch": 1,
+      "train_loss": 3.1808372338612876,
+      "val_macro_f1": 0.023644333989161576
+    },
+    {
+      "epoch": 2,
+      "train_loss": 3.1339794046738567,
+      "val_macro_f1": 0.3283089139296307
+    },
+    {
+      "epoch": 3,
+      "train_loss": 2.6385615152471207,
+      "val_macro_f1": 0.7608201034574874
+    },
+    {
+      "epoch": 4,
+      "train_loss": 1.6488556090523214,
+      "val_macro_f1": 0.8937983917956828
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.8310464059605318,
+      "val_macro_f1": 0.9430118628648042
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.36495312347131614,
+      "val_macro_f1": 0.9706913116839587
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.1391489700067277,
+      "val_macro_f1": 0.9599395634322105
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.05670337072190117,
+      "val_macro_f1": 0.971406799899447
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.03197975153578263,
+      "val_macro_f1": 0.9710099745026216
+    },
+    {
+      "epoch": 10,
+      "train_loss": 0.020138723063556588,
+      "val_macro_f1": 0.9710099745026216
+    },
+    {
+      "epoch": 11,
+      "train_loss": 0.01461401379064602,
+      "val_macro_f1": 0.9710099745026216
+    },
+    {
+      "epoch": 12,
+      "train_loss": 0.011530537961744795,
+      "val_macro_f1": 0.9710099745026216
+    },
+    {
+      "epoch": 13,
+      "train_loss": 0.009649453602512093,
+      "val_macro_f1": 0.9710099745026216
+    },
+    {
+      "epoch": 14,
+      "train_loss": 0.00840157124341703,
+      "val_macro_f1": 0.9710099745026216
+    },
+    {
+      "epoch": 15,
+      "train_loss": 0.0070020390729255534,
+      "val_macro_f1": 0.9710099745026216
+    },
+    {
+      "epoch": 16,
+      "train_loss": 0.006293358043858818,
+      "val_macro_f1": 0.9710099745026216
+    }
+  ],
+  "learning_curve_converged": [
+    {
+      "model": "TF-IDF + LogReg",
+      "n_train": 80,
+      "seed": 0,
+      "macro_f1": 0.747229200538024
+    },
+    {
+      "model": "DistilBERT (converged)",
+      "n_train": 80,
+      "seed": 0,
+      "macro_f1": 0.6865256203491498
+    },
+    {
+      "model": "TF-IDF + LogReg",
+      "n_train": 80,
+      "seed": 1,
+      "macro_f1": 0.6997314805364341
+    },
+    {
+      "model": "DistilBERT (converged)",
+      "n_train": 80,
+      "seed": 1,
+      "macro_f1": 0.7186428359222478
+    },
+    {
+      "model": "TF-IDF + LogReg",
+      "n_train": 80,
+      "seed": 2,
+      "macro_f1": 0.6755096085688191
+    },
+    {
+      "model": "DistilBERT (converged)",
+      "n_train": 80,
+      "seed": 2,
+      "macro_f1": 0.6638508808013452
+    },
+    {
+      "model": "TF-IDF + LogReg",
+      "n_train": 201,
+      "seed": 0,
+      "macro_f1": 0.8347388314300078
+    },
+    {
+      "model": "DistilBERT (converged)",
+      "n_train": 201,
+      "seed": 0,
+      "macro_f1": 0.8605484685593044
+    },
+    {
+      "model": "TF-IDF + LogReg",
+      "n_train": 201,
+      "seed": 1,
+      "macro_f1": 0.872847386817975
+    },
+    {
+      "model": "DistilBERT (converged)",
+      "n_train": 201,
+      "seed": 1,
+      "macro_f1": 0.8529416661769603
+    },
+    {
+      "model": "TF-IDF + LogReg",
+      "n_train": 201,
+      "seed": 2,
+      "macro_f1": 0.8644069638651682
+    },
+    {
+      "model": "DistilBERT (converged)",
+      "n_train": 201,
+      "seed": 2,
+      "macro_f1": 0.8554817119155356
+    },
+    {
+      "model": "TF-IDF + LogReg",
+      "n_train": 403,
+      "seed": 0,
+      "macro_f1": 0.9457571152617593
+    },
+    {
+      "model": "DistilBERT (converged)",
+      "n_train": 403,
+      "seed": 0,
+      "macro_f1": 0.9440435789700494
+    },
+    {
+      "model": "TF-IDF + LogReg",
+      "n_train": 403,
+      "seed": 1,
+      "macro_f1": 0.9226126212968319
+    },
+    {
+      "model": "DistilBERT (converged)",
+      "n_train": 403,
+      "seed": 1,
+      "macro_f1": 0.9217987819284259
+    },
+    {
+      "model": "TF-IDF + LogReg",
+      "n_train": 403,
+      "seed": 2,
+      "macro_f1": 0.9289133467152043
+    },
+    {
+      "model": "DistilBERT (converged)",
+      "n_train": 403,
+      "seed": 2,
+      "macro_f1": 0.9335187280040221
+    },
+    {
+      "model": "TF-IDF + LogReg",
+      "n_train": 807,
+      "seed": 0,
+      "macro_f1": 0.9516429648782591
+    },
+    {
+      "model": "DistilBERT (converged)",
+      "n_train": 807,
+      "seed": 0,
+      "macro_f1": 0.9624943887811535
+    },
+    {
+      "model": "TF-IDF + LogReg",
+      "n_train": 807,
+      "seed": 1,
+      "macro_f1": 0.9516429648782591
+    },
+    {
+      "model": "DistilBERT (converged)",
+      "n_train": 807,
+      "seed": 1,
+      "macro_f1": 0.9673623081711318
+    },
+    {
+      "model": "TF-IDF + LogReg",
+      "n_train": 807,
+      "seed": 2,
+      "macro_f1": 0.9516429648782591
+    },
+    {
+      "model": "DistilBERT (converged)",
+      "n_train": 807,
+      "seed": 2,
+      "macro_f1": 0.9607802736479206
+    }
+  ]
+}

@@ -1,0 +1,108 @@
+{
+  "phase": "CNN vs LSTM \u2014 MIT-BIH ECG arrhythmia",
+  "dataset": "shayanfazeli/heartbeat (MIT-BIH, 187-sample beats, 5 AAMI classes)",
+  "n_train": 78798,
+  "n_val": 8756,
+  "n_test": 21892,
+  "headline_metric": "macro_f1",
+  "class_weighting": "balanced",
+  "seed": 42,
+  "results": {
+    "CNN": {
+      "params": 343397,
+      "epochs_run": 35,
+      "train_time_s": 278.4,
+      "inference_ms_per_beat": 0.2806,
+      "accuracy": 0.9758,
+      "macro_f1": 0.8776,
+      "weighted_f1": 0.9776,
+      "macro_auc_ovr": 0.9959,
+      "per_class_recall": {
+        "N": 0.9776,
+        "S": 0.9065,
+        "V": 0.9641,
+        "F": 0.9198,
+        "Q": 0.9956
+      },
+      "per_class_f1": {
+        "N": 0.9869,
+        "S": 0.7689,
+        "V": 0.9598,
+        "F": 0.6819,
+        "Q": 0.9907
+      }
+    },
+    "BiLSTM": {
+      "params": 141189,
+      "epochs_run": 40,
+      "train_time_s": 639.8,
+      "inference_ms_per_beat": 0.0834,
+      "accuracy": 0.9085,
+      "macro_f1": 0.7187,
+      "weighted_f1": 0.9246,
+      "macro_auc_ovr": 0.983,
+      "per_class_recall": {
+        "N": 0.9044,
+        "S": 0.8076,
+        "V": 0.9206,
+        "F": 0.9321,
+        "Q": 0.9764
+      },
+      "per_class_f1": {
+        "N": 0.9459,
+        "S": 0.4629,
+        "V": 0.8781,
+        "F": 0.3639,
+        "Q": 0.9427
+      }
+    },
+    "CNN_BiLSTM": {
+      "params": 184325,
+      "epochs_run": 36,
+      "train_time_s": 273.9,
+      "inference_ms_per_beat": 0.0639,
+      "accuracy": 0.9715,
+      "macro_f1": 0.866,
+      "weighted_f1": 0.9737,
+      "macro_auc_ovr": 0.9941,
+      "per_class_recall": {
+        "N": 0.9739,
+        "S": 0.8921,
+        "V": 0.9537,
+        "F": 0.9259,
+        "Q": 0.9919
+      },
+      "per_class_f1": {
+        "N": 0.9845,
+        "S": 0.7348,
+        "V": 0.9511,
+        "F": 0.6742,
+        "Q": 0.9855
+      }
+    },
+    "BiLSTM_long": {
+      "params": 141189,
+      "epochs_run": 56,
+      "train_time_s": 897.5,
+      "inference_ms_per_beat": 0.0961,
+      "accuracy": 0.9255,
+      "macro_f1": 0.7464,
+      "weighted_f1": 0.9369,
+      "macro_auc_ovr": 0.9851,
+      "per_class_recall": {
+        "N": 0.9236,
+        "S": 0.8255,
+        "V": 0.9372,
+        "F": 0.8951,
+        "Q": 0.9745
+      },
+      "per_class_f1": {
+        "N": 0.9566,
+        "S": 0.5249,
+        "V": 0.8898,
+        "F": 0.4073,
+        "Q": 0.9535
+      }
+    }
+  }
+}
