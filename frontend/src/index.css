@@ -1,0 +1,160 @@
+@import "tailwindcss";
+
+/* Dark is the default (no class needed); `.light` on <html> flips it.
+   This lets every component use light:<utility> the same way dark: works. */
+@custom-variant light (&:where(.light, .light *));
+
+/* ────────────────────────────────────────────────────────────────
+   HealthGuard AI — design tokens
+   Direction: clinical instrument, not hospital brochure. The ECG
+   waveform is the project's own signature material, so it becomes
+   the visual signature too — traced live in the hero, echoed as a
+   divider motif and loading state. Data reads like a lab readout
+   (monospace, tabular), not like marketing copy.
+   ──────────────────────────────────────────────────────────────── */
+
+@theme {
+  /* Display face: geometric, slightly clinical, used for headings only */
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  /* Body face: humanist, high legibility at small sizes */
+  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+  /* Data face: every number, code, risk score, SHAP value */
+  --font-data: "JetBrains Mono", ui-monospace, "SF Mono", monospace;
+
+  /* Ink — the dark base */
+  --color-ink-950: #060a12;
+  --color-ink-900: #0b1220;
+  --color-ink-800: #111a2c;
+  --color-ink-700: #1a2740;
+  --color-ink-600: #263756;
+  --color-ink-500: #3a4f78;
+  --color-ink-400: #5b7099;
+  --color-ink-300: #8b9cbe;
+  --color-ink-200: #c2ccdf;
+  --color-ink-100: #e5e9f2;
+  --color-ink-50: #f5f7fb;
+
+  /* Paper — the light base */
+  --color-paper-50: #fbfcfd;
+  --color-paper-100: #f2f4f7;
+
+  /* Vital — signature accent, drawn from a pulse-oximeter teal, not default blue */
+  --color-vital-600: #0d9488;
+  --color-vital-500: #14b8a6;
+  --color-vital-400: #2dd4c4;
+  --color-vital-300: #6ee7dc;
+  --color-vital-glow: #5eead4;
+
+  /* Signal — warm coral for elevated risk. Legible, not alarmist. */
+  --color-signal-600: #dc4c3f;
+  --color-signal-500: #ef5b4d;
+  --color-signal-400: #f47c6f;
+  --color-signal-300: #f9a89e;
+
+  /* Amber — moderate risk / caution */
+  --color-amber-500: #d9922f;
+  --color-amber-400: #eab04a;
+
+  /* Chart family accents — categorical identity for the model-comparison
+     chart only. Deliberately a separate hue set from vital/signal/amber,
+     which carry risk-tier meaning elsewhere in the app; reusing them here
+     would make a model-family color misread as a risk cue. Validated as a
+     set (CVD-safe under simulated protan/deutan/tritan, all-pairs, both
+     surfaces) via the dataviz skill's palette validator. Gray is a true
+     R=G=B neutral, not a step of the blue-tinted ink ramp, so it reads as
+     "no hue" rather than "a darker blue" next to --color-chart-blue. */
+  --color-chart-gray: #525252;
+  --color-chart-blue: #3987e5;
+  --color-chart-violet: #7c3aed;
+  --color-chart-magenta: #d55181;
+  --color-chart-green: #008300;
+
+  --radius-card: 1rem;
+}
+
+html {
+  color-scheme: dark;
+}
+html.light {
+  color-scheme: light;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-ink-950);
+  color: var(--color-ink-100);
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+html.light body {
+  background-color: var(--color-paper-50);
+  color: var(--color-ink-900);
+}
+
+::selection {
+  background-color: var(--color-vital-500);
+  color: var(--color-ink-950);
+}
+
+/* Scrollbar tuned to the ink palette */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--color-ink-600);
+  border-radius: 999px;
+  border: 2px solid var(--color-ink-950);
+}
+html.light ::-webkit-scrollbar-thumb {
+  background: var(--color-ink-200);
+  border: 2px solid var(--color-paper-50);
+}
+
+/* Visible keyboard focus everywhere — accessibility floor, not optional */
+:focus-visible {
+  outline: 2px solid var(--color-vital-400);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Utility: tabular data readout style, used for every numeric result */
+.data-readout {
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* Waveform trace draw-on animation, used by the WaveformDivider component */
+@keyframes trace {
+  from { stroke-dashoffset: var(--trace-len); }
+  to { stroke-dashoffset: 0; }
+}
+.waveform-trace {
+  stroke-dasharray: var(--trace-len);
+  stroke-dashoffset: var(--trace-len);
+  animation: trace 2.4s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+/* Looping variant — same draw-on trace, repeated, for progress indicators
+   where the wait genuinely continues (e.g. TabPFN's ~30s SHAP explanation)
+   rather than a one-shot hero reveal. */
+.waveform-trace-loop {
+  stroke-dasharray: var(--trace-len);
+  stroke-dashoffset: var(--trace-len);
+  animation: trace 1.8s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+.animate-pulse-soft {
+  animation: pulse-soft 2.2s ease-in-out infinite;
+}
