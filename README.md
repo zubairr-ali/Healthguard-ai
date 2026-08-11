@@ -148,6 +148,4 @@ professional medical advice.
 ## Acknowledgements
 
 Built as part of a Computer Science final-year project, with guidance
-from an academic supervisor across multiple review meetings. Developed
-with assistance from Claude (Anthropic), used and disclosed in line with
-university AI-use policy.
+from an academic supervisor across multiple review meetings.
