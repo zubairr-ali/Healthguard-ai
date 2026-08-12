@@ -92,9 +92,6 @@ def build_stacking_model(scale_pos_weight=1.0):
     return StackingClassifier(estimators=estimators, final_estimator=LogisticRegression(max_iter=1000), cv=3)
 
 
-# Models fitted directly (no RandomizedSearchCV) because they are either a pretrained
-# foundation model (TabPFN) or a neural net where grid search would mean training
-# dozens of networks — both fit once with sensible defaults instead.
 NO_TUNING_MODELS = {"TabPFN", "TabNet", "FT-Transformer", "TabTransformer"}
 
 
@@ -154,13 +151,6 @@ def train_models(X, y, condition, use_smote=False):
         X_te = X_test_scaled if needs_scaling else X_test
 
         if name in NO_TUNING_MODELS:
-            # TabPFN is a pretrained foundation model that uses in-context learning;
-            # the other three are neural nets where a hyperparameter grid search would
-            # mean training dozens of networks — all four are fit once instead of via
-            # RandomizedSearchCV. FT-Transformer/TabTransformer/TabNet all hold out a
-            # validation split internally and use patience-based early stopping on
-            # validation loss, so "fixed hyperparameters" here means the architecture/
-            # optimizer settings, not the number of epochs actually trained.
             note = "foundation model" if name == "TabPFN" else "neural tabular model"
             print(f"  Fitting {name} for {condition} (no tuning — {note})...")
             best_est = base_model
@@ -188,9 +178,6 @@ def train_models(X, y, condition, use_smote=False):
             best_params = search.best_params_
 
         if name == "TabNet":
-            # TabNetClassifier's __init__ mutates cat_emb_dim, which breaks sklearn's
-            # clone() — cross_val_score relies on clone(), so fold estimators are
-            # rebuilt manually instead.
             cat_idxs, cat_dims = best_est.cat_idxs, best_est.cat_dims
             cv_scores = manual_cv_f1(
                 lambda: make_tabnet(cat_idxs, cat_dims),
@@ -200,8 +187,6 @@ def train_models(X, y, condition, use_smote=False):
                 ),
             )
         else:
-            # Neural/foundation models run sequentially (n_jobs=1) — parallel
-            # multiprocess CV would spawn duplicate torch/foundation-model processes.
             cv_n_jobs = 1 if name in NO_TUNING_MODELS else -1
             cv_scores = cross_val_score(best_est, X_tr, y_tr, cv=cv, scoring="f1", n_jobs=cv_n_jobs)
         cv_f1_mean = round(cv_scores.mean() * 100, 2)

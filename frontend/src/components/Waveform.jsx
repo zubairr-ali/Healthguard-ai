@@ -1,13 +1,3 @@
-/**
- * The project's signature visual element. HealthGuard AI's own research
- * (Phase 2) is ECG classification, so the waveform trace is not decoration
- * borrowed from generic medical branding — it is the artefact the project
- * actually produces. Reused as: hero centerpiece, section divider, and
- * (in compact form) a loading indicator.
- *
- * The path approximates a real single PQRST cycle repeated, not an
- * arbitrary squiggle, drawn with a self-animating stroke.
- */
 
 const BEAT_SEGMENT = [
   [0, 40], [28, 40], [34, 34], [40, 46], [46, 20], [52, 58], [58, 40], [64, 40],
@@ -74,7 +64,6 @@ export default function Waveform({
   );
 }
 
-/** Small inline pulse used inside buttons/badges while a request is in flight. */
 export function WaveformPulse({ size = 20, color = 'currentColor' }) {
   return (
     <svg viewBox="0 0 60 20" width={size * 3} height={size} aria-hidden="true">

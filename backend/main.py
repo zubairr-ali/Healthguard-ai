@@ -28,7 +28,6 @@ from shap_explainer import get_global_shap, get_individual_shap
 from llm_advisor import generate_advisory, generate_fallback_advisory
 from database import init_db, save_prediction, get_all_predictions, get_stats
 
-# ── App setup ────────────────────────────────────────────────────────────────
 app = FastAPI(title="HealthGuard AI API", version="1.0.0")
 
 app.add_middleware(
@@ -39,26 +38,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── Initialise database on startup ───────────────────────────────────────────
 @app.on_event("startup")
 async def startup():
     init_db()
     print("[OK] HealthGuard AI API started.")
 
 
-# ── Request models ───────────────────────────────────────────────────────────
 class HeartPatient(BaseModel):
     Age: float
-    Sex: str          # "M" or "F"
-    ChestPainType: str  # "TA", "ATA", "NAP", "ASY"
+    Sex: str
+    ChestPainType: str
     RestingBP: float
     Cholesterol: float
-    FastingBS: int     # 0 or 1
-    RestingECG: str    # "Normal", "ST", "LVH"
+    FastingBS: int
+    RestingECG: str
     MaxHR: float
-    ExerciseAngina: str  # "Y" or "N"
+    ExerciseAngina: str
     Oldpeak: float
-    ST_Slope: str      # "Up", "Flat", "Down"
+    ST_Slope: str
 
 
 class DiabetesPatient(BaseModel):
@@ -72,26 +69,21 @@ class DiabetesPatient(BaseModel):
     Age: float
 
 
-# ── Health check ─────────────────────────────────────────────────────────────
 @app.get("/")
 def root():
     return {"message": "HealthGuard AI API is running", "version": "1.0.0"}
 
 
-# ── Predict endpoint ─────────────────────────────────────────────────────────
 @app.post("/api/predict/heart")
 def predict_heart(patient: HeartPatient):
     try:
         raw_dict = patient.model_dump()
         patient_dict = encode_heart_patient(raw_dict)
 
-        # Prediction
         result = predict_patient("heart", patient_dict)
 
-        # Individual SHAP
         shap_vals = get_individual_shap("heart", patient_dict)
 
-        # Advisory
         advisory = generate_fallback_advisory(
             "heart disease",
             result["risk_score"],
@@ -99,7 +91,6 @@ def predict_heart(patient: HeartPatient):
             list(shap_vals.items())[:3]
         )
 
-        # Save to database — clean numpy types before storing
         save_prediction(
             condition="heart",
             patient_data=clean_json(patient_dict),
@@ -161,7 +152,6 @@ def predict_diabetes(patient: DiabetesPatient):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ── Global SHAP endpoint ─────────────────────────────────────────────────────
 @app.get("/api/shap/global/{condition}")
 def global_shap(condition: str):
     try:
@@ -179,7 +169,6 @@ def global_shap(condition: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ── Model comparison endpoint ────────────────────────────────────────────────
 @app.get("/api/models/{condition}")
 def model_comparison(condition: str):
     if condition not in ("heart", "diabetes"):
@@ -202,7 +191,6 @@ def model_comparison(condition: str):
     }
 
 
-# ── History endpoint ─────────────────────────────────────────────────────────
 @app.get("/api/history")
 def history():
     try:
@@ -212,7 +200,6 @@ def history():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ── Stats endpoint ───────────────────────────────────────────────────────────
 @app.get("/api/stats")
 def stats():
     try:

@@ -5,13 +5,6 @@ import { Sun, Moon, Activity, GitFork } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 import Waveform from './Waveform';
 
-// A plain <Outlet /> re-reads router context on every render, so if it were
-// rendered directly inside the exiting half of an AnimatePresence swap, it
-// would immediately switch to the *new* page's content mid fade-out instead
-// of animating the old one away. useState's initializer only runs once per
-// mount, so this freezes each transition's outlet to the page it started
-// with — AnimatePresence gives this instance a fresh mount (and a fresh
-// freeze) only when the route key actually changes.
 function AnimatedOutlet() {
   const [outlet] = useState(useOutlet());
   return outlet;

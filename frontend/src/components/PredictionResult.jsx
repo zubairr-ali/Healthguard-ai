@@ -15,13 +15,6 @@ function bandFor(p) {
   return 'High risk';
 }
 
-/**
- * disease: 'heart' | 'diabetes' — used to key the clinical narrative generator.
- * diseaseLabel: display string for the summary sentence, e.g. 'heart disease'.
- * formValues: the exact values submitted for this prediction (a snapshot,
- * not live form state — the two can drift apart if the user edits fields
- * after seeing a result without resubmitting).
- */
 export default function PredictionResult({ result, disease, diseaseLabel = 'elevated', formValues }) {
   if (!result) return null;
   const { probability, model_used, contributions } = result;
@@ -33,7 +26,6 @@ export default function PredictionResult({ result, disease, diseaseLabel = 'elev
 
   return (
     <div>
-      {/* ── Headline: gauge + plain-language summary, stacked and centered ── */}
       <div className="flex flex-col items-center text-center pb-8 mb-8 border-b border-ink-800 light:border-ink-100">
         {validProbability ? (
           <>
@@ -59,7 +51,6 @@ export default function PredictionResult({ result, disease, diseaseLabel = 'elev
         )}
       </div>
 
-      {/* ── Feature-level explanation ── */}
       {contributions?.length > 0 && (
         <div className="mb-8">
           <h4 className="text-sm font-semibold text-ink-100 light:text-ink-800 mb-1">
@@ -73,7 +64,6 @@ export default function PredictionResult({ result, disease, diseaseLabel = 'elev
         </div>
       )}
 
-      {/* ── Advisory note — generated from the actual submitted values ── */}
       {advisory && (
         <div className="mb-8">
           <h4 className="text-sm font-semibold text-ink-100 light:text-ink-800 mb-2">
@@ -83,7 +73,6 @@ export default function PredictionResult({ result, disease, diseaseLabel = 'elev
         </div>
       )}
 
-      {/* ── Disclaimer: quiet, full-width, last — not competing with the result ── */}
       <p className="text-xs text-ink-500 light:text-ink-400 leading-relaxed pt-5 border-t border-ink-800 light:border-ink-100">
         This estimate is decision support generated from a statistical model trained on
         historical clinical data. It is not a medical diagnosis, does not account for

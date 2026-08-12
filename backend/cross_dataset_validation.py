@@ -67,7 +67,6 @@ np.random.seed(SEED)
 
 HERE = Path(__file__).resolve().parent
 
-# Expected filenames (wherever the data folder turns out to be)
 F_PIMA = "diabetes.csv"
 F_FRANKFURT = "diabetes_frankfurt.csv"
 F_HEART = "heart.csv"
@@ -83,9 +82,9 @@ def find_data_dir() -> Path:
     whichever contains the most of the expected CSVs.
     """
     candidates = [
-        HERE / "data",           # backend/data/
-        HERE.parent / "data",    # repo-root/data/
-        HERE,                    # beside the script
+        HERE / "data",
+        HERE.parent / "data",
+        HERE,
         Path.cwd() / "data",
         Path.cwd(),
     ]
@@ -122,9 +121,6 @@ DATA_DIR = find_data_dir()
 RESULTS_DIR = HERE / "results"
 
 
-# ══════════════════════════════════════════════════════════════════════
-# MODEL REGISTRY
-# ══════════════════════════════════════════════════════════════════════
 
 def build_models():
     """Return {name: estimator}. Optional libraries are skipped if absent."""
@@ -167,15 +163,13 @@ def build_models():
 
     try:
         from tabpfn import TabPFNClassifier  # noqa: F401
-        models["TabPFN"] = "TABPFN"  # special-cased in fit_predict
+        models["TabPFN"] = "TABPFN"
     except ImportError:
         print("  [skip] tabpfn not installed")
 
     return models
 
 
-# TabPFN refuses >5000 training samples on CPU. It is designed for the
-# small-sample regime; this cap is a property of the model, not a workaround.
 TABPFN_MAX_TRAIN = 5_000
 
 
@@ -184,7 +178,7 @@ def _instantiate(model):
         from tabpfn import TabPFNClassifier
         try:
             return TabPFNClassifier(ignore_pretraining_limits=True)
-        except TypeError:            # older tabpfn without the kwarg
+        except TypeError:
             return TabPFNClassifier()
     from sklearn.base import clone
     return clone(model)
@@ -195,7 +189,6 @@ def fit_predict_proba(model, X_tr, y_tr, X_te):
     est = _instantiate(model)
 
     if model == "TABPFN":
-        # TabPFN cannot ingest NaNs reliably and is capped on training size
         X_tr = pd.DataFrame(X_tr).fillna(pd.DataFrame(X_tr).median()).values
         X_te = pd.DataFrame(X_te).fillna(pd.DataFrame(X_te).median()).values
         if len(X_tr) > TABPFN_MAX_TRAIN:
@@ -221,14 +214,10 @@ def score_all(y_true, proba, threshold=0.5):
     }
 
 
-# ══════════════════════════════════════════════════════════════════════
-# LOADERS + HARMONISATION
-# ══════════════════════════════════════════════════════════════════════
 
 DIABETES_FEATURES = ["Pregnancies", "Glucose", "BloodPressure", "SkinThickness",
                      "Insulin", "BMI", "DiabetesPedigreeFunction", "Age"]
 
-# Columns where a literal 0 is physiologically impossible => missing data
 DIABETES_ZERO_AS_NAN = ["Glucose", "BloodPressure", "SkinThickness",
                         "Insulin", "BMI"]
 
@@ -241,7 +230,6 @@ def load_diabetes(path: Path, label: str) -> pd.DataFrame:
     if missing:
         raise ValueError(f"{label}: missing columns {missing}. Found: {list(df.columns)}")
     df = df[DIABETES_FEATURES + ["Outcome"]].copy()
-    # Recode impossible zeros as NaN; imputation happens inside each pipeline
     for c in DIABETES_ZERO_AS_NAN:
         df.loc[df[c] == 0, c] = np.nan
     return df
@@ -272,15 +260,12 @@ def load_heart_common(path: Path) -> pd.DataFrame:
     out["age"] = df["Age"].astype(float)
     out["sex"] = (df["Sex"].astype(str).str.upper() == "M").astype(int)
 
-    # RestingBP == 0 is a known data-quality artefact in this release
     bp = df["RestingBP"].astype(float).replace(0, np.nan)
     out["systolic_bp"] = bp
 
-    # Cholesterol == 0 encodes "not measured" for ~172 rows
     chol = df["Cholesterol"].astype(float).replace(0, np.nan)
     out["chol_cat"] = _chol_mgdl_to_cat(chol)
 
-    # FastingBS is already binary: 1 if fasting blood sugar > 120 mg/dL
     out["gluc_elevated"] = df["FastingBS"].astype(int)
 
     out["target"] = df["HeartDisease"].astype(int)
@@ -289,7 +274,6 @@ def load_heart_common(path: Path) -> pd.DataFrame:
 
 def load_cardio_common(path: Path) -> pd.DataFrame:
     """sulianova cardiovascular dataset -> harmonised common subset."""
-    # This file ships semicolon-delimited; fall back to comma if needed.
     df = pd.read_csv(path, sep=";")
     if df.shape[1] == 1:
         df = pd.read_csv(path, sep=",")
@@ -301,24 +285,19 @@ def load_cardio_common(path: Path) -> pd.DataFrame:
 
     n_raw = len(df)
     out = pd.DataFrame(index=df.index)
-    out["age"] = df["age"].astype(float) / 365.25          # stored in days
-    out["sex"] = (df["gender"].astype(int) == 2).astype(int)  # 2 = male, 1 = female
+    out["age"] = df["age"].astype(float) / 365.25
+    out["sex"] = (df["gender"].astype(int) == 2).astype(int)
     out["systolic_bp"] = df["ap_hi"].astype(float)
-    out["chol_cat"] = df["cholesterol"].astype(float)       # already 1/2/3
+    out["chol_cat"] = df["cholesterol"].astype(float)
     out["gluc_elevated"] = (df["gluc"].astype(int) > 1).astype(int)
     out["target"] = df["cardio"].astype(int)
 
-    # This release contains extreme BP artefacts (negatives, values >10000).
-    # Restrict to a physiologically plausible range.
     ok = out["systolic_bp"].between(70, 250) & out["age"].between(18, 100)
     out = out[ok].copy()
     print(f"    cardio: kept {len(out):,} of {n_raw:,} rows after BP/age sanity filter")
     return out
 
 
-# ══════════════════════════════════════════════════════════════════════
-# CONTAMINATION GATE
-# ══════════════════════════════════════════════════════════════════════
 
 CONTAMINATION_THRESHOLD_PCT = 5.0
 
@@ -368,9 +347,6 @@ def independence_gate(a_name, a, b_name, b, results) -> bool:
     return False
 
 
-# ══════════════════════════════════════════════════════════════════════
-# EXPERIMENT RUNNER
-# ══════════════════════════════════════════════════════════════════════
 
 def run_direction(models, src_name, src_df, tgt_name, tgt_df, features, results):
     """Internal CV on source, then external evaluation on target."""
@@ -394,9 +370,7 @@ def run_direction(models, src_name, src_df, tgt_name, tgt_df, features, results)
 
     for name, model in models.items():
         try:
-            # --- internal: 5-fold CV on the source dataset ---
             if model == "TABPFN":
-                # cross_val_score cannot clone the sentinel; do folds manually
                 aucs = []
                 for tr, te in cv.split(Xs, ys):
                     p = fit_predict_proba(model, Xs[tr], ys[tr], Xs[te])
@@ -407,7 +381,6 @@ def run_direction(models, src_name, src_df, tgt_name, tgt_df, features, results)
                     _instantiate(model), Xs, ys, cv=cv, scoring="roc_auc",
                     n_jobs=1)))
 
-            # --- external: fit on all of source, score on all of target ---
             proba = fit_predict_proba(model, Xs, ys, Xt)
             ext = score_all(yt, proba)
             drop = internal - ext["roc_auc"]
@@ -456,9 +429,6 @@ def summarise(results):
         print(sub[["model", "internal_auc", "external_auc",
                    "degradation"]].to_string(index=False))
 
-    # Only average over directions that EVERY model completed. Averaging a
-    # model that failed a hard direction against models that attempted it
-    # would rank the failure as robustness.
     n_dir = df["direction"].nunique()
     coverage = df.groupby("model")["direction"].nunique()
     complete = coverage[coverage == n_dir].index.tolist()
@@ -499,7 +469,7 @@ def main():
     print("HealthGuard AI - Cross-Dataset External Validation")
     print("=" * 78)
 
-    if len(sys.argv) > 1:                       # explicit override wins
+    if len(sys.argv) > 1:
         DATA_DIR = Path(sys.argv[1]).resolve()
     report_data_dir(DATA_DIR)
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -510,7 +480,6 @@ def main():
 
     results = {}
 
-    # ---------- Experiment A : diabetes ----------
     pima_p, frank_p = DATA_DIR / F_PIMA, DATA_DIR / F_FRANKFURT
     if pima_p.exists() and frank_p.exists():
         print("\n" + "=" * 78)
@@ -530,7 +499,6 @@ def main():
     else:
         print(f"\n[skip] Experiment A - need {F_PIMA} and {F_FRANKFURT} in {DATA_DIR}")
 
-    # ---------- Experiment B : cardiovascular ----------
     heart_p, cardio_p = DATA_DIR / F_HEART, DATA_DIR / F_CARDIO
     if heart_p.exists() and cardio_p.exists():
         print("\n" + "=" * 78)

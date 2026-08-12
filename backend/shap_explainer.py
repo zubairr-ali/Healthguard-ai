@@ -4,7 +4,7 @@ import pandas as pd
 import pickle
 import os
 import matplotlib
-matplotlib.use("Agg")  # Non-interactive backend for saving files
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 CATEGORICAL_PREFIXES = ["Sex", "ChestPainType", "RestingECG", "ExerciseAngina", "ST_Slope"]
@@ -22,39 +22,18 @@ def aggregate_categorical_shap(shap_dict):
         aggregated[key] = aggregated.get(key, 0) + val
     return dict(sorted(aggregated.items(), key=lambda x: abs(x[1]), reverse=True))
 
-# ── paths ───────────────────────────────────────────────────────────────────
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODELS_DIR = os.path.join(BASE_DIR, "models")
 PLOTS_DIR = os.path.join(BASE_DIR, "plots")
 os.makedirs(PLOTS_DIR, exist_ok=True)
 
 
-# ── load model + data ────────────────────────────────────────────────────────
 def load_model_and_features(condition):
     model = pickle.load(open(os.path.join(MODELS_DIR, f"{condition}_model.pkl"), "rb"))
     features = pickle.load(open(os.path.join(MODELS_DIR, f"{condition}_features.pkl"), "rb"))
     return model, features
 
 
-# ── explainer selection ──────────────────────────────────────────────────────
-# TreeExplainer only supports tree-based models (Random Forest, XGBoost,
-# LightGBM, CatBoost). TabPFN — the winning heart-disease model — is a
-# pretrained transformer and TreeExplainer rejects it at construction with
-# "Model type not yet supported by TreeExplainer: TabPFNClassifier".
-#
-# Rather than special-case TabPFN by name (fragile — breaks if the model
-# lineup changes), this tries the fast exact TreeExplainer first and falls
-# back to a model-agnostic permutation explainer built on predict_proba for
-# anything TreeExplainer doesn't support. That covers TabPFN today and any
-# future non-tree model without further changes here.
-#
-# Trade-off worth knowing: the fallback calls predict_proba many times per
-# explanation, so it is slower than TreeExplainer. For TabPFN specifically,
-# each call re-runs in-context inference, so this is noticeably slower than
-# the tree models. Acceptable for a single patient's individual explanation;
-# global SHAP over the full dataset (get_global_shap) will be slow for a
-# non-tree model and is a known limitation worth naming in the report if
-# TabPFN's interpretability cost comes up.
 _BACKGROUND_CACHE = {}
 
 
@@ -114,22 +93,21 @@ def _positive_class_shap(explainer, kind, df, max_evals=None):
     offline analysis, not a live request)."""
     if kind == "tree":
         raw = explainer.shap_values(df)
-        if isinstance(raw, list):          # legacy shap: list of per-class arrays
+        if isinstance(raw, list):
             raw = np.array(raw[1])
         else:
             raw = np.array(raw)
-            if raw.ndim == 3:              # newer shap: (n_samples, n_features, n_classes)
+            if raw.ndim == 3:
                 raw = raw[..., 1] if raw.shape[-1] == 2 else raw[1]
         return raw
     else:
         exp = explainer(df, max_evals=max_evals) if max_evals else explainer(df)
         vals = np.array(exp.values)
-        if vals.ndim == 3:                 # (n_samples, n_features, n_classes) from predict_proba
+        if vals.ndim == 3:
             vals = vals[..., 1]
         return vals
 
 
-# ── GLOBAL SHAP — top features across whole dataset ─────────────────────────
 def get_global_shap(condition, X: pd.DataFrame):
     model, features = load_model_and_features(condition)
     X = X[features]
@@ -137,16 +115,13 @@ def get_global_shap(condition, X: pd.DataFrame):
     explainer, kind = _make_explainer(model, condition, features)
     sv = _positive_class_shap(explainer, kind, X)
 
-    # Mean absolute SHAP value per feature
     mean_shap = np.abs(sv).mean(axis=0)
     feature_importance = dict(zip(features, mean_shap.tolist()))
 
-    # Sort descending
     sorted_importance = dict(
         sorted(feature_importance.items(), key=lambda x: x[1], reverse=True)
     )
 
-    # Save global SHAP bar chart
     plt.figure(figsize=(10, 6))
     feat_names = list(sorted_importance.keys())[:10]
     feat_vals = list(sorted_importance.values())[:10]
@@ -161,31 +136,24 @@ def get_global_shap(condition, X: pd.DataFrame):
     return aggregate_categorical_shap(sorted_importance)
 
 
-# ── INDIVIDUAL SHAP — why THIS patient got this prediction ───────────────────
 def get_individual_shap(condition, patient_data: dict):
     model, features = load_model_and_features(condition)
     df = pd.DataFrame([patient_data]).reindex(columns=features, fill_value=0)
 
     explainer, kind = _make_explainer(model, condition, features)
-    # Minimum valid budget for the permutation explainer — bounds this to a
-    # predictable cost on the interactive request path (see docstring above).
     max_evals = 2 * len(features) + 1
     sv = _positive_class_shap(explainer, kind, df, max_evals=max_evals)
 
-    # Flatten to a single row of per-feature contributions
     row = np.asarray(sv)[0]
 
-    # Build per-feature dict
     individual = {}
     for feat, val in zip(features, row.tolist()):
         individual[feat] = round(val, 4)
 
-    # Sort by absolute impact
     sorted_individual = dict(
         sorted(individual.items(), key=lambda x: abs(x[1]), reverse=True)
     )
 
-    # Save individual waterfall-style chart
     plt.figure(figsize=(10, 6))
     feat_names = list(sorted_individual.keys())[:10]
     feat_vals = list(sorted_individual.values())[:10]
@@ -201,7 +169,6 @@ def get_individual_shap(condition, patient_data: dict):
     return aggregate_categorical_shap(sorted_individual)
 
 
-# ── TEST when run directly ───────────────────────────────────────────────────
 if __name__ == "__main__":
     from model import load_heart, load_diabetes
 

@@ -57,11 +57,6 @@ const PHASES = [
   },
 ];
 
-// Same connected-node visual grammar as Findings' hero PhaseFlowDiagram —
-// icon circle, thin connector, staggered entrance — adapted for scroll
-// triggering (this section sits well below the fold, so whileInView
-// replaces the mount-time animation) and for a title/description per step
-// rather than a single word label.
 const HOW_IT_WORKS = [
   { icon: ClipboardList, title: 'Enter clinical values', desc: 'The same measurements a clinician would record, entered once.' },
   { icon: Layers, title: 'Compared across eleven models', desc: 'Every model scores the same input under identical conditions.' },
@@ -108,12 +103,6 @@ function HowItWorks() {
   );
 }
 
-// Every figure here is checked against the codebase, not asserted: 26 is
-// pytest's own passing count under backend/tests (`pytest -q` → "26
-// passed"), 5 is the row count of the Datasets table in the project
-// README, and the contamination figure is the Frankfurt-cohort finding
-// documented on the Findings page. Reuses the same useCountUp hook as
-// RiskGauge and Findings' StatCard, gated on scroll into view the same way.
 const MANIFESTO = [
   'No single model taken on faith.',
   'Every prediction explained, feature by feature.',
@@ -148,7 +137,6 @@ function CountStat({ value, label }) {
 export default function Home() {
   return (
     <div>
-      {/* ── Hero ───────────────────────────────────────────────── */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,rgba(20,184,166,0.12),transparent)]" />
         <div className="max-w-6xl mx-auto px-5 sm:px-8 pt-16 sm:pt-24 pb-8 relative">
@@ -211,7 +199,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Headline stats, read like an instrument panel ─────── */}
       <section className="max-w-6xl mx-auto px-5 sm:px-8 mt-4 mb-20">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-px rounded-2xl overflow-hidden border border-ink-800 light:border-ink-100 bg-ink-800 light:bg-ink-100">
           {[
@@ -230,7 +217,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Welcome / why this exists ──────────────────────────── */}
       <section className="max-w-6xl mx-auto px-5 sm:px-8 pb-20">
         <div className="max-w-2xl mb-10">
           <span className="text-xs font-semibold tracking-wide uppercase text-vital-400">Welcome</span>
@@ -272,7 +258,6 @@ export default function Home() {
         </Link>
       </section>
 
-      {/* ── Three phases ───────────────────────────────────────── */}
       <section className="max-w-6xl mx-auto px-5 sm:px-8 pb-24">
         <div className="grid sm:grid-cols-3 gap-5">
           {PHASES.map((p) => (
@@ -293,7 +278,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── How it works ───────────────────────────────────────── */}
       <section className="max-w-6xl mx-auto px-5 sm:px-8 pb-24">
         <div className="max-w-2xl mb-14 mx-auto text-center">
           <span className="text-xs font-semibold tracking-wide uppercase text-vital-400">How it works</span>
@@ -304,7 +288,6 @@ export default function Home() {
         <HowItWorks />
       </section>
 
-      {/* ── Built on rigour ────────────────────────────────────── */}
       <section className="max-w-6xl mx-auto px-5 sm:px-8 pb-24">
         <Card className="p-8 sm:p-10">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-8">
@@ -323,7 +306,6 @@ export default function Home() {
         </Card>
       </section>
 
-      {/* ── Closing statement ──────────────────────────────────── */}
       <section className="max-w-3xl mx-auto px-5 sm:px-8 py-20 sm:py-24 text-center">
         <div className="space-y-4 sm:space-y-5">
           {MANIFESTO.map((line, i) => (

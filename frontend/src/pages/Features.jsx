@@ -6,14 +6,6 @@ import {
 import { Card, Badge } from '../components/ui';
 import Waveform from '../components/Waveform';
 
-// Every fact below is checked against the codebase, not asserted — model
-// names against ModelComparison.jsx's FAMILY map and the README's model
-// lineup, the advisory note's data path against PredictionResult.jsx (which
-// calls buildAdvisory() from clinicalNarrative.js directly; the backend's
-// own advisory_note field is fetched but never rendered), and the
-// local-only claim against main.py, where both predict endpoints call
-// generate_fallback_advisory — never the OpenAI-backed generate_advisory —
-// so no prediction ever leaves the machine it runs on.
 const FEATURES = [
   {
     icon: Layers,
@@ -79,7 +71,6 @@ export default function Features() {
         <Waveform repeats={18} height={70} strokeWidth={2} />
       </div>
 
-      {/* ── The real-world problem ─────────────────────────────── */}
       <section className="max-w-3xl mt-16 mb-20">
         <span className="text-xs font-semibold tracking-wide uppercase text-vital-400">
           Why this exists
@@ -100,7 +91,6 @@ export default function Features() {
         </p>
       </section>
 
-      {/* ── Feature-by-feature breakdown ───────────────────────── */}
       <section className="mb-24">
         <div className="max-w-2xl mb-10">
           <span className="text-xs font-semibold tracking-wide uppercase text-vital-400">
@@ -156,7 +146,6 @@ export default function Features() {
         </div>
       </section>
 
-      {/* ── How would this perform for a real patient? ─────────── */}
       <motion.section
         id="real-world-performance"
         initial={{ opacity: 0, y: 16 }}

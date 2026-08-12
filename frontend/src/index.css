@@ -1,27 +1,13 @@
 @import "tailwindcss";
 
-/* Dark is the default (no class needed); `.light` on <html> flips it.
-   This lets every component use light:<utility> the same way dark: works. */
 @custom-variant light (&:where(.light, .light *));
 
-/* ────────────────────────────────────────────────────────────────
-   HealthGuard AI — design tokens
-   Direction: clinical instrument, not hospital brochure. The ECG
-   waveform is the project's own signature material, so it becomes
-   the visual signature too — traced live in the hero, echoed as a
-   divider motif and loading state. Data reads like a lab readout
-   (monospace, tabular), not like marketing copy.
-   ──────────────────────────────────────────────────────────────── */
 
 @theme {
-  /* Display face: geometric, slightly clinical, used for headings only */
   --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
-  /* Body face: humanist, high legibility at small sizes */
   --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
-  /* Data face: every number, code, risk score, SHAP value */
   --font-data: "JetBrains Mono", ui-monospace, "SF Mono", monospace;
 
-  /* Ink — the dark base */
   --color-ink-950: #060a12;
   --color-ink-900: #0b1220;
   --color-ink-800: #111a2c;
@@ -34,35 +20,23 @@
   --color-ink-100: #e5e9f2;
   --color-ink-50: #f5f7fb;
 
-  /* Paper — the light base */
   --color-paper-50: #fbfcfd;
   --color-paper-100: #f2f4f7;
 
-  /* Vital — signature accent, drawn from a pulse-oximeter teal, not default blue */
   --color-vital-600: #0d9488;
   --color-vital-500: #14b8a6;
   --color-vital-400: #2dd4c4;
   --color-vital-300: #6ee7dc;
   --color-vital-glow: #5eead4;
 
-  /* Signal — warm coral for elevated risk. Legible, not alarmist. */
   --color-signal-600: #dc4c3f;
   --color-signal-500: #ef5b4d;
   --color-signal-400: #f47c6f;
   --color-signal-300: #f9a89e;
 
-  /* Amber — moderate risk / caution */
   --color-amber-500: #d9922f;
   --color-amber-400: #eab04a;
 
-  /* Chart family accents — categorical identity for the model-comparison
-     chart only. Deliberately a separate hue set from vital/signal/amber,
-     which carry risk-tier meaning elsewhere in the app; reusing them here
-     would make a model-family color misread as a risk cue. Validated as a
-     set (CVD-safe under simulated protan/deutan/tritan, all-pairs, both
-     surfaces) via the dataviz skill's palette validator. Gray is a true
-     R=G=B neutral, not a step of the blue-tinted ink ramp, so it reads as
-     "no hue" rather than "a darker blue" next to --color-chart-blue. */
   --color-chart-gray: #525252;
   --color-chart-blue: #3987e5;
   --color-chart-violet: #7c3aed;
@@ -95,7 +69,6 @@ html.light body {
   color: var(--color-ink-950);
 }
 
-/* Scrollbar tuned to the ink palette */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
@@ -108,7 +81,6 @@ html.light ::-webkit-scrollbar-thumb {
   border: 2px solid var(--color-paper-50);
 }
 
-/* Visible keyboard focus everywhere — accessibility floor, not optional */
 :focus-visible {
   outline: 2px solid var(--color-vital-400);
   outline-offset: 2px;
@@ -124,14 +96,12 @@ html.light ::-webkit-scrollbar-thumb {
   }
 }
 
-/* Utility: tabular data readout style, used for every numeric result */
 .data-readout {
   font-family: var(--font-data);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
 }
 
-/* Waveform trace draw-on animation, used by the WaveformDivider component */
 @keyframes trace {
   from { stroke-dashoffset: var(--trace-len); }
   to { stroke-dashoffset: 0; }
@@ -142,9 +112,6 @@ html.light ::-webkit-scrollbar-thumb {
   animation: trace 2.4s cubic-bezier(0.65, 0, 0.35, 1) forwards;
 }
 
-/* Looping variant — same draw-on trace, repeated, for progress indicators
-   where the wait genuinely continues (e.g. TabPFN's ~30s SHAP explanation)
-   rather than a one-shot hero reveal. */
 .waveform-trace-loop {
   stroke-dasharray: var(--trace-len);
   stroke-dashoffset: var(--trace-len);

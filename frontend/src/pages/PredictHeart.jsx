@@ -34,7 +34,7 @@ export default function PredictHeart() {
       };
       const res = await api.predictHeart(payload);
       setResult(res);
-      setSubmitted(form); // snapshot exactly what was submitted, for the advisory text
+      setSubmitted(form);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Something went wrong. Please try again.');
     } finally {

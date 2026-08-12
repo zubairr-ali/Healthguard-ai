@@ -69,9 +69,6 @@ export function Badge({ children, tone = 'neutral', className = '' }) {
   );
 }
 
-// Leads with a plain-language accuracy claim for non-technical visitors;
-// the actual model name and metric are still shown, just de-emphasized,
-// so the number is available without being the headline.
 export function ModelBadge({ label, name, metric, tone = 'vital' }) {
   return (
     <div className="flex items-center gap-2.5 flex-wrap">

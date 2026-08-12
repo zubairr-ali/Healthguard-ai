@@ -123,7 +123,6 @@ def fig_rank_inversion(df, outdir):
         for (_, r), yi, ye in zip(sub.iterrows(), li, le):
             ax.plot([0, 1], [r.internal, r.external], "-o", lw=2.2,
                     ms=7, color=colours[r.model], alpha=0.85)
-            # labels sit at the de-collided heights, joined back by leader lines
             ax.text(-0.10, yi, f"{r.model}  {r.internal:.3f}", ha="right",
                     va="center", fontsize=8.5, color=colours[r.model])
             ax.text(1.10, ye, f"{r.external:.3f}", ha="left", va="center",

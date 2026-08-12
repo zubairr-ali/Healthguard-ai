@@ -1,9 +1,3 @@
-/**
- * Horizontal diverging bars for per-feature SHAP contributions.
- * Positive (pushes risk up) renders in the signal (coral) color,
- * negative (pushes risk down) in vital (teal) — consistent with the
- * risk-gauge palette elsewhere in the app.
- */
 export default function ShapBars({ contributions }) {
   if (!contributions?.length) return null;
   const max = Math.max(...contributions.map((c) => Math.abs(c.value)), 0.001);

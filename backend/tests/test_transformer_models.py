@@ -11,10 +11,6 @@ from deep_tabular_models import (
 )
 from shap_explainer import _make_explainer, _positive_class_shap
 
-# Small, fast settings — these tests exist to prove fit/predict/predict_proba
-# wire together correctly on real data, not to reproduce production accuracy,
-# so epoch counts and model width are cut down from build_base_models' defaults
-# (dim=32, depth=3, max_epochs=200) purely to keep the suite fast.
 FAST_KW = dict(dim=8, depth=1, heads=2, max_epochs=3, patience=2, batch_size=32)
 TRANSFORMER_MODEL_NAMES = ["FT-Transformer", "TabTransformer", "TabNet"]
 
@@ -48,7 +44,6 @@ def _fit_transformer(name, X, y):
     return model
 
 
-# ── build_base_models() / NO_TUNING_MODELS wiring ───────────────────────────
 
 def test_no_tuning_models_contains_all_three_transformers():
     assert {"FT-Transformer", "TabTransformer", "TabNet"} <= NO_TUNING_MODELS
@@ -63,7 +58,6 @@ def test_build_base_models_includes_correctly_typed_transformers(heart_data):
     assert isinstance(models["TabNet"], DeepTabNetClassifier)
 
 
-# ── fit / predict / predict_proba on both datasets ──────────────────────────
 
 @pytest.mark.parametrize("condition", ["heart", "diabetes"])
 @pytest.mark.parametrize("model_name", TRANSFORMER_MODEL_NAMES)
@@ -85,7 +79,6 @@ def test_transformer_fits_and_predicts(model_name, condition, heart_data, diabet
     assert np.allclose(probs.sum(axis=1), 1.0, atol=1e-3)
 
 
-# ── SHAP generic/fallback explainer path on a transformer model ────────────
 
 def test_shap_generic_fallback_produces_valid_contributions_for_transformer(heart_data):
     """TreeExplainer rejects FT-Transformer just like it rejects TabPFN, so
@@ -107,8 +100,5 @@ def test_shap_generic_fallback_produces_valid_contributions_for_transformer(hear
     contributions = dict(zip(features, sv[0].tolist()))
     assert set(contributions.keys()) == set(features)
     assert all(np.isfinite(v) for v in contributions.values())
-    # Not every contribution should be a no-op zero, and none should blow up
-    # to an implausible magnitude — both would indicate the fallback path is
-    # silently broken rather than actually explaining the model.
     assert any(abs(v) > 1e-6 for v in contributions.values())
     assert all(abs(v) < 50 for v in contributions.values())

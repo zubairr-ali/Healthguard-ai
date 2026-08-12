@@ -3,10 +3,6 @@ import { Clock, Loader2, AlertTriangle, Inbox } from 'lucide-react';
 import { Card, Badge } from '../components/ui';
 import { api, ApiError } from '../lib/api';
 
-// History rows come straight from /api/history (backend/database.py), which
-// stores risk_score on a 0-100 scale (see model.py's `round(prob * 100, 1)`)
-// — unlike the predict endpoints, this data never passes through
-// mapPredictionResponse, so it must not be re-scaled here.
 function riskBadge(pct) {
   if (pct < 30) return <Badge tone="vital">Low · {pct.toFixed(0)}%</Badge>;
   if (pct < 60) return <Badge tone="amber">Moderate · {pct.toFixed(0)}%</Badge>;

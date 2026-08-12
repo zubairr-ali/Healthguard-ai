@@ -39,7 +39,7 @@ export default function PredictDiabetes() {
       const payload = Object.fromEntries(Object.entries(form).map(([k, v]) => [k, Number(v)]));
       const res = await api.predictDiabetes(payload);
       setResult(res);
-      setSubmitted(payload); // snapshot exactly what was submitted, for the advisory text
+      setSubmitted(payload);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Something went wrong. Please try again.');
     } finally {

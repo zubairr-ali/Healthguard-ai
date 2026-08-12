@@ -67,23 +67,6 @@ const XVAL_SERIES = {
   external: { label: 'External (independent cohort)', color: 'var(--color-signal-500)' },
 };
 
-// Closing synthesis: the project's simplest winning model against its most
-// complex, on four axes that determine whether a model is actually worth
-// using, not just how it scores. Every value is derived from numbers
-// already established above, not new measurements:
-//   - performance: macro F1 on the full symptom-text benchmark (NLP_DATA).
-//   - training speed: inverse wall-clock time, normalized to the faster
-//     model. Derived from the "~1,600x faster" claim in the NLP section —
-//     DistilBERT's relative speed is 1/1600.
-//   - interpretability: a qualitative 0-1 judgement, not a measurement. A
-//     linear model over transparent bag-of-words features scores high; a
-//     67M-parameter transformer, legible only through post-hoc
-//     approximation, scores low.
-//   - data efficiency: inverse of the training-set size each model needs
-//     to reach 90% of its own ceiling macro F1, read off LEARNING_CURVE.
-//     TF-IDF crosses that bar at n=201 (0.8573 vs a 0.85644 threshold);
-//     DistilBERT needs n=403 (0.9331 vs a 0.86715 threshold) — roughly
-//     twice the data for the same relative milestone.
 const RADAR_DATA = [
   { axis: 'Performance', simple: 0.9675, complex: 0.9635 },
   { axis: 'Training speed', simple: 1, complex: 1 / 1600 },
@@ -95,22 +78,9 @@ const RADAR_SERIES = {
   complex: { label: 'DistilBERT (fine-tuned)', color: 'var(--color-ink-500)' },
 };
 
-// ink-500 reads fine as a bar fill against the page background, but at
-// 12px tooltip-text size its contrast against the tooltip's own fixed
-// dark background (ink-900) drops to ~2.3:1 — below a legible floor.
-// Swap to the lighter ink-300 for tooltip text only; charts keep ink-500.
 const TOOLTIP_TEXT_OVERRIDE = { 'var(--color-ink-500)': 'var(--color-ink-300)' };
 const tooltipTextColor = (fill) => TOOLTIP_TEXT_OVERRIDE[fill] ?? fill;
 
-// Recharts derives each tooltip entry's text color from the originating
-// <Bar>/<Line> element's own `fill`/`stroke` prop (see ModelComparison.jsx
-// for the full diagnosis). None of the charts on this page set that prop —
-// colors are painted per-Cell or per-series instead — so Recharts falls
-// back to itemStyle's hardcoded '#000', invisible against the tooltip's
-// dark background. This shared content component sidesteps the inference
-// entirely: the label is always pinned to ink-50, and each value's color
-// comes from an explicit `seriesInfo` resolver reading the same color the
-// chart itself was painted with, never from Recharts' own state.
 function ChartTooltip({ active, payload, labelKey, labelFormatter, seriesInfo, valueFormatter = (v) => v.toFixed(4) }) {
   if (!active || !payload?.length) return null;
   const row = payload[0].payload;
@@ -142,11 +112,6 @@ function ChartTooltip({ active, payload, labelKey, labelFormatter, seriesInfo, v
   );
 }
 
-// Plain-English glossary for the jargon this page can't avoid using. Keyed
-// by the exact display text so <Term> can look itself up without a
-// separate `term` prop in the common case; pass `term` explicitly when the
-// text on the page (e.g. a plural or different casing) doesn't match the
-// canonical key.
 const GLOSSARY = {
   'macro F1': 'A single accuracy score averaged equally across every class, so a model can’t hide poor performance on a rare class behind strong performance on a common one.',
   'ROC-AUC': 'A 0–1 score for how well a model ranks true cases above false ones across every possible decision threshold. 0.5 is a coin flip; 1.0 is perfect separation.',
@@ -185,9 +150,6 @@ function Term({ children, term }) {
   );
 }
 
-// One-sentence, jargon-free restatement of a section's finding, shown
-// before the technical paragraph rather than instead of it — for a reader
-// who wants the headline without the metrics.
 function PlainEnglish({ children }) {
   return (
     <div className="mb-5 flex gap-3 items-start p-3.5 rounded-lg bg-vital-500/[0.05] border border-vital-500/15">
@@ -269,11 +231,6 @@ function Section({ id, icon: Icon, eyebrow, phase, title, children }) {
   );
 }
 
-// A stat tile that counts up from 0 once it scrolls into view, reusing the
-// same useCountUp hook RiskGauge uses for its percentage readout. The
-// target itself stays 0 until `inView` flips, which — since useCountUp
-// re-runs its animation whenever `target` changes — is what defers the
-// count-up until the reveal, rather than animating immediately on mount.
 function StatCard({ value, prefix = '', suffix = '', decimals = 0, label, tone = 'text-ink-50 light:text-ink-900' }) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, amount: 0.4 });
@@ -293,12 +250,6 @@ function StatCard({ value, prefix = '', suffix = '', decimals = 0, label, tone =
   );
 }
 
-// The hero's right side has genuine empty width on desktop (its text column
-// is capped at max-w-2xl inside a wider max-w-6xl container) — fill it with
-// a small on-load animation of the same four phases and icons used by the
-// sections below, rather than generic decoration. Purely illustrative: the
-// four-phase explainer box underneath already carries this same information
-// as accessible text, so the diagram is hidden from assistive tech.
 const PHASE_FLOW = [
   { icon: HeartPulse, label: 'Tabular' },
   { icon: Activity, label: 'ECG' },

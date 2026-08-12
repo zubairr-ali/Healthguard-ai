@@ -1,22 +1,3 @@
-/**
- * Builds a grounded, per-field advisory paragraph from the patient's actual
- * submitted values and the SHAP contributions for this specific prediction —
- * rather than the backend's generic top-3-factor summary, which never sees
- * the raw input values at all (llm_advisor.py only receives feature names
- * and SHAP direction, not the numbers behind them).
- *
- * Thresholds cited are standard clinical reference ranges, named inline so
- * they're defensible rather than invented:
- *   - Glucose: WHO 2-hour OGTT categories
- *   - Blood pressure: ACC/AHA 2017 categories
- *   - BMI: WHO categories
- *   - Cholesterol: NCEP ATP III categories (same standard used elsewhere
- *     in this project's cross-dataset harmonisation)
- * Fields without a widely-agreed public threshold (Insulin, SkinThickness,
- * Pregnancies, DiabetesPedigreeFunction, MaxHR, Oldpeak, and the categorical
- * heart fields) are described by direction and magnitude only — the model's
- * reasoning, not an invented medical cutoff.
- */
 
 const DIABETES_LABELS = {
   Pregnancies: 'pregnancies',
@@ -118,7 +99,6 @@ function describeFeature(disease, feature, contribValue, formValues) {
     return `${cap(label)} was recorded at ${raw}${unit ? ` ${unit}` : ''} and contributed to ${direction} the predicted risk.`;
   }
 
-  // heart
   const label = HEART_LABELS[feature] || feature;
   const unit = HEART_UNITS[feature] || '';
   if (HEART_CATEGORICAL_LABELS[feature]) {

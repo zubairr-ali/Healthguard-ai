@@ -1,20 +1,7 @@
-/**
- * Displays a 0-1 risk probability as a circular instrument readout —
- * deliberately not a friendly "score card". The register matches a
- * lab display: tabular numerals, a calibrated arc, a plain-language
- * band label underneath so the number is never presented bare.
- */
 
 import { useReducedMotion } from 'framer-motion';
 import { useCountUp } from '../hooks/useCountUp';
 
-// The arc keeps the app's normal accent shades in both themes — they read
-// fine as a graphical ring against the track. The band *label text*, at
-// small size, does not: vital-400/amber-500/signal-500 are tuned for a dark
-// background and drop to ~1.8-3.4:1 against a light one, under the 4.5:1
-// floor. These hue-preserving darkened variants (~5:1 against white) apply
-// in light theme only, so the same risk color still reads as "the same
-// color", just legible.
 function bandFor(p) {
   if (p < 0.3) return { label: 'Low risk', color: 'var(--color-vital-400)', className: 'text-vital-400 light:text-[#0d7c70]' };
   if (p < 0.6) return { label: 'Moderate risk', color: 'var(--color-amber-500)', className: 'text-amber-500 light:text-[#96631b]' };

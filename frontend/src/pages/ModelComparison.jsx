@@ -14,26 +14,14 @@ const CONDITIONS = [
   { key: 'diabetes', label: 'Diabetes' },
 ];
 
-// A fixed [0, 100] domain leaves almost no gap between the bar end and the
-// axis boundary whenever the highest value in the dataset sits in the 90s
-// (as heart's does), so the value label collides with the boundary
-// gridline. Padding the domain to the data's own range keeps a consistent
-// margin regardless of how high or low the dataset runs.
 function niceAxisMax(max) {
-  const padded = max + 9; // ~8-10 points of breathing room
-  const rounded = Math.ceil(padded / 5) * 5; // round up to a clean gridline-friendly number
+  const padded = max + 9;
+  const rounded = Math.ceil(padded / 5) * 5;
   return Math.min(100, rounded);
 }
 
-// Even with a padded domain, a handful of bars can still sit close enough
-// to the axis edge that an outside label would collide with the boundary
-// gridline (this is what happens across most of the heart chart, since
-// its 11 models are tightly clustered in the 90-96 range). For those,
-// draw the label inside the bar's own end instead, so it never has to
-// share space with the axis at all.
 const INSIDE_GAP_THRESHOLD = 10;
 
-// Which model family each benchmarked model belongs to.
 const FAMILY = {
   'Logistic Regression': 'baseline',
   'Random Forest': 'tree',
@@ -48,9 +36,6 @@ const FAMILY = {
   TabPFN: 'foundation',
 };
 
-// Colors are a separate hue set from vital/signal/amber (see index.css) —
-// those carry risk-tier meaning elsewhere in the app, and reusing one here
-// would make a model family misread as a risk cue.
 const FAMILY_META = {
   baseline: { label: 'Baseline', fill: 'var(--color-chart-gray)' },
   tree: { label: 'Tree ensemble', fill: 'var(--color-chart-blue)' },
@@ -63,8 +48,6 @@ const BEST_FILL = 'var(--color-vital-400)';
 
 const LEGEND_ITEMS = [{ label: 'Best model', fill: BEST_FILL }, ...Object.values(FAMILY_META)];
 
-// Text color for a label drawn inside a bar of the given fill — picked per
-// fill for readable contrast (validated alongside the fills themselves).
 const INSIDE_LABEL_TEXT = {
   [BEST_FILL]: 'var(--color-ink-950)',
   'var(--color-chart-gray)': 'var(--color-ink-50)',
@@ -83,15 +66,6 @@ function labelFill(barColor) {
   return INSIDE_LABEL_TEXT[barColor] ?? 'var(--color-ink-50)';
 }
 
-// Recharts' default Tooltip derives each item's text color from the <Bar>
-// element's own `fill` prop (see SetBarTooltipEntrySettings in Bar.js) —
-// it has no per-Cell awareness for Cartesian charts (only Pie/Funnel read
-// their Cells for tooltip color). Since this chart colors bars entirely
-// via per-Cell fills and never sets `fill` on <Bar> itself, that prop is
-// always undefined, so Recharts falls back to itemStyle's hardcoded
-// default of '#000' — black in both themes, not just a light/dark quirk.
-// A custom content renderer sidesteps the inference entirely by reusing
-// the exact same barFill() call the bar itself was painted with.
 function ChartTooltip({ active, payload, bestModel }) {
   if (!active || !payload?.length) return null;
   const { name, roc_auc } = payload[0].payload;

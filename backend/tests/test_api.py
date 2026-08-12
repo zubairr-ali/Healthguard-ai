@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 from main import app
 
 from database import init_db
-init_db()  # ensure tables exist before any test runs
+init_db()
 
 client = TestClient(app)
 
@@ -43,9 +43,9 @@ def test_predict_diabetes_endpoint_valid_input():
 
 
 def test_predict_heart_invalid_input_rejected():
-    payload = {"Age": "not a number"}  # malformed input
+    payload = {"Age": "not a number"}
     response = client.post("/api/predict/heart", json=payload)
-    assert response.status_code == 422  # FastAPI validation error
+    assert response.status_code == 422
 
 
 def test_stats_endpoint():

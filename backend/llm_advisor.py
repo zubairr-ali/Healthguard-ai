@@ -11,7 +11,6 @@ client = OpenAI(api_key=api_key) if api_key else None
 def generate_advisory(condition: str, patient_data: dict, risk_score: float,
                        risk_level: str, shap_values: dict) -> str:
 
-    # Get top 3 most impactful features
     top_factors = list(shap_values.items())[:3]
     factors_text = "\n".join([
         f"- {feat}: SHAP impact = {val:+.4f} "
@@ -54,7 +53,6 @@ Keep the tone professional but accessible. Maximum 150 words."""
         return response.choices[0].message.content
 
     except Exception as e:
-        # Fallback if API unavailable
         return generate_fallback_advisory(
             condition_name, risk_score, risk_level, top_factors
         )
@@ -81,7 +79,6 @@ def generate_fallback_advisory(condition_name: str, risk_score: float,
 
 
 if __name__ == "__main__":
-    # Test with fallback (no API key needed for this test)
     print("Testing advisory generation...")
 
     test_shap = {

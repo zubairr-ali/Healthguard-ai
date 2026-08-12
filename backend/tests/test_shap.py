@@ -21,6 +21,5 @@ def test_individual_shap_returns_clean_clinical_features():
     }
     encoded = encode_heart_patient(raw)
     result = get_individual_shap("heart", encoded)
-    # Should be collapsed to original clinical variable names, not one-hot dummies
     for key in result.keys():
         assert "_" not in key or key in ["ExerciseAngina", "ChestPainType", "ST_Slope", "RestingECG"]
