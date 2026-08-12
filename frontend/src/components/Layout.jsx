@@ -19,6 +19,7 @@ function AnimatedOutlet() {
 
 const NAV = [
   { to: '/', label: 'Home', end: true },
+  { to: '/features', label: 'Features' },
   { to: '/predict/heart', label: 'Heart risk' },
   { to: '/predict/diabetes', label: 'Diabetes risk' },
   { to: '/findings', label: 'Research findings' },

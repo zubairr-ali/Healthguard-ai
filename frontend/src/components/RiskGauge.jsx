@@ -5,36 +5,20 @@
  * band label underneath so the number is never presented bare.
  */
 
-import { useEffect, useState } from 'react';
-import { animate, useReducedMotion } from 'framer-motion';
+import { useReducedMotion } from 'framer-motion';
+import { useCountUp } from '../hooks/useCountUp';
 
-// Matches the arc's own CSS transition (1s, same cubic-bezier) so the
-// number and the ring complete their reveal together.
-const GAUGE_EASE = [0.65, 0, 0.35, 1];
-
-function useCountUp(target, shouldAnimate) {
-  const [value, setValue] = useState(shouldAnimate ? 0 : target);
-
-  useEffect(() => {
-    if (!shouldAnimate) {
-      setValue(target);
-      return;
-    }
-    const controls = animate(0, target, {
-      duration: 1,
-      ease: GAUGE_EASE,
-      onUpdate: setValue,
-    });
-    return controls.stop;
-  }, [target, shouldAnimate]);
-
-  return value;
-}
-
+// The arc keeps the app's normal accent shades in both themes — they read
+// fine as a graphical ring against the track. The band *label text*, at
+// small size, does not: vital-400/amber-500/signal-500 are tuned for a dark
+// background and drop to ~1.8-3.4:1 against a light one, under the 4.5:1
+// floor. These hue-preserving darkened variants (~5:1 against white) apply
+// in light theme only, so the same risk color still reads as "the same
+// color", just legible.
 function bandFor(p) {
-  if (p < 0.3) return { label: 'Low risk', color: 'var(--color-vital-400)', className: 'text-vital-400' };
-  if (p < 0.6) return { label: 'Moderate risk', color: 'var(--color-amber-500)', className: 'text-amber-500' };
-  return { label: 'High risk', color: 'var(--color-signal-500)', className: 'text-signal-500' };
+  if (p < 0.3) return { label: 'Low risk', color: 'var(--color-vital-400)', className: 'text-vital-400 light:text-[#0d7c70]' };
+  if (p < 0.6) return { label: 'Moderate risk', color: 'var(--color-amber-500)', className: 'text-amber-500 light:text-[#96631b]' };
+  return { label: 'High risk', color: 'var(--color-signal-500)', className: 'text-signal-500 light:text-[#d72413]' };
 }
 
 export default function RiskGauge({ probability, size = 180 }) {

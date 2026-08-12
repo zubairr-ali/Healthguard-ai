@@ -83,7 +83,7 @@ the results chapter of the project report.
 - **Backend:** Python, FastAPI, scikit-learn, XGBoost / LightGBM / CatBoost, TabPFN, PyTorch (FT-Transformer, TabTransformer, TabNet), SHAP, SQLite
 - **Frontend:** React 19, Tailwind CSS v4, React Router, Recharts, Framer Motion
 - **Modelling:** TensorFlow/Keras (ECG CNN/BiLSTM), Hugging Face Transformers (DistilBERT), trained on Google Colab (T4 GPU)
-- **Testing:** pytest (17 tests — models, SHAP, database, API)
+- **Testing:** pytest (26 tests — models, SHAP, database, API)
 
 ---
 
@@ -148,6 +148,4 @@ professional medical advice.
 ## Acknowledgements
 
 Built as part of a Computer Science final-year project, with guidance
-from an academic supervisor across multiple review meetings. Developed
-with assistance from Claude (Anthropic), used and disclosed in line with
-university AI-use policy.
+from an academic supervisor across multiple review meetings.
