@@ -6,7 +6,7 @@ support system (module 6WCM0029).
 ## Setup
 
 ```bash
-cd frontend/app
+cd frontend
 npm install
 npm run dev
 ```
@@ -28,10 +28,12 @@ the HealthGuard API" message when submitting a prediction form.
 ## Pages
 
 - `/` — landing page
+- `/features` — what the system can do and what that means for a real patient
 - `/predict/heart` — heart disease risk prediction (calls `/api/predict/heart`)
 - `/predict/diabetes` — diabetes risk prediction (calls `/api/predict/diabetes`)
 - `/findings` — static research results showcase (ECG, NLP, cross-dataset
   validation) — these are report findings, not live model endpoints
+- `/models` — full 11-model comparison, ranked by ROC-AUC (calls `/api/models/:condition`)
 - `/history` — prediction history (calls `/api/history`)
 
 ## Design system
