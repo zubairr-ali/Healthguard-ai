@@ -1,6 +1,5 @@
-
 const DIABETES_LABELS = {
-  Pregnancies: 'pregnancies',
+  Pregnancies: 'pregnancy count',
   Glucose: 'glucose',
   BloodPressure: 'diastolic blood pressure',
   SkinThickness: 'skin thickness',
@@ -82,7 +81,30 @@ const HEART_CATEGORICAL_NOTE = {
   ExerciseAngina: { Y: 'exercise-induced angina is a recognised marker of possible ischaemia' },
 };
 
-function describeFeature(disease, feature, contribValue, formValues) {
+const PATTERN_RULES = {
+  diabetes: { features: ['Glucose', 'BMI', 'Age', 'BloodPressure'], minMatches: 3, name: 'metabolic risk factors' },
+  heart: { features: ['Cholesterol', 'RestingBP', 'ST_Slope'], minMatches: 2, name: 'cardiovascular risk factors' },
+};
+
+const FOLLOW_UP_TEST = {
+  heart: 'a follow-up lipid panel, resting ECG, or cardiology review',
+  diabetes: 'a follow-up HbA1c test or fasting glucose panel',
+};
+
+const CONNECTORS = ['', 'In addition, ', 'Similarly, ', 'Further, '];
+
+function cap(s) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function joinList(items) {
+  if (items.length === 0) return '';
+  if (items.length === 1) return items[0];
+  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  return `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`;
+}
+
+function describeFeatureClause(disease, feature, contribValue, formValues) {
   const positive = contribValue >= 0;
   const direction = positive ? 'increasing' : 'lowering';
   const raw = formValues?.[feature];
@@ -94,9 +116,9 @@ function describeFeature(disease, feature, contribValue, formValues) {
     const rangeFn = DIABETES_RANGES[feature];
     if (rangeFn) {
       const [desc, standard] = rangeFn(Number(raw));
-      return `${cap(label)} was recorded at ${raw}${unit ? ` ${unit}` : ''}, ${desc} (${standard} reference), and was among the strongest factors ${direction} the predicted risk.`;
+      return `${label} was recorded at ${raw}${unit ? ` ${unit}` : ''}, ${desc} (${standard} reference), and was among the factors ${direction} the predicted risk.`;
     }
-    return `${cap(label)} was recorded at ${raw}${unit ? ` ${unit}` : ''} and contributed to ${direction} the predicted risk.`;
+    return `${label} was recorded at ${raw}${unit ? ` ${unit}` : ''} and contributed to ${direction} the predicted risk.`;
   }
 
   const label = HEART_LABELS[feature] || feature;
@@ -104,35 +126,49 @@ function describeFeature(disease, feature, contribValue, formValues) {
   if (HEART_CATEGORICAL_LABELS[feature]) {
     const readable = HEART_CATEGORICAL_LABELS[feature][raw] || raw;
     const note = HEART_CATEGORICAL_NOTE[feature]?.[raw];
-    return `${cap(label)} was recorded as ${readable}${note ? ` — ${note}` : ''}, contributing to ${direction} the predicted risk.`;
+    return `${label} was recorded as ${readable}${note ? ` — ${note}` : ''}, contributing to ${direction} the predicted risk.`;
   }
   if (raw === undefined) return `${label} was a ${direction} factor in this prediction.`;
   const rangeFn = HEART_RANGES[feature];
   if (rangeFn) {
     const [desc, standard] = rangeFn(Number(raw));
-    return `${cap(label)} was recorded at ${raw}${unit ? ` ${unit}` : ''}, ${desc} (${standard} reference), and was among the strongest factors ${direction} the predicted risk.`;
+    return `${label} was recorded at ${raw}${unit ? ` ${unit}` : ''}, ${desc} (${standard} reference), and was among the factors ${direction} the predicted risk.`;
   }
-  return `${cap(label)} was recorded at ${raw}${unit ? ` ${unit}` : ''} and contributed to ${direction} the predicted risk.`;
+  return `${label} was recorded at ${raw}${unit ? ` ${unit}` : ''} and contributed to ${direction} the predicted risk.`;
 }
 
-function cap(s) {
-  return s.charAt(0).toUpperCase() + s.slice(1);
+function sentenceFromClause(clause, index) {
+  const connector = CONNECTORS[Math.min(index, CONNECTORS.length - 1)];
+  return connector ? connector + clause : cap(clause);
 }
 
-function closingParagraph(band) {
+function synthesisSentence(disease, increasing) {
+  const rule = PATTERN_RULES[disease];
+  if (!rule) return null;
+  const matched = increasing.filter((c) => rule.features.includes(c.feature));
+  if (matched.length < rule.minMatches) return null;
+  const labels = disease === 'diabetes' ? DIABETES_LABELS : HEART_LABELS;
+  const names = matched.map((c) => labels[c.feature] || c.feature);
+  return `${cap(joinList(names))} co-occurring here forms a recognisable pattern of ${rule.name}, rather than a set of isolated, unrelated readings.`;
+}
+
+function closingParagraph(band, disease) {
+  const test = FOLLOW_UP_TEST[disease] || 'appropriate follow-up testing';
   if (band === 'High risk') {
     return (
       'Taken together, this pattern — particularly the values sitting outside typical reference ' +
-      'ranges above — is worth discussing with a clinician in the near term. A clinical work-up ' +
-      'would help determine whether these signals reflect an underlying condition or a combination ' +
-      'of borderline readings that warrant monitoring rather than immediate concern.'
+      'ranges above — is worth discussing with a clinician in the near term. Further investigation, ' +
+      `such as ${test}, may be appropriate to help clarify whether these signals reflect an ` +
+      'underlying condition or a combination of borderline readings that warrant monitoring rather ' +
+      'than immediate concern.'
     );
   }
   if (band === 'Moderate risk') {
     return (
       'None of these values are individually alarming, but several sit outside the typical reference ' +
-      'range and the combination is worth tracking. A routine check-up would help establish whether ' +
-      'this pattern is stable, improving, or worsening over time.'
+      'range and the combination is worth tracking. A routine check-up — potentially including ' +
+      `${test}, at a clinician's discretion — would help establish whether this pattern is ` +
+      'stable, improving, or worsening over time.'
     );
   }
   return (
@@ -143,7 +179,21 @@ function closingParagraph(band) {
 
 export function buildAdvisory({ disease, formValues, contributions, band }) {
   if (!contributions?.length) return null;
-  const top = contributions.slice(0, 3);
-  const sentences = top.map((c) => describeFeature(disease, c.feature, c.value, formValues));
-  return [...sentences, closingParagraph(band)].join(' ');
+
+  const increasing = contributions.filter((c) => c.value >= 0).slice(0, 4);
+  const offsetting = contributions.filter((c) => c.value < 0).slice(0, 4);
+
+  const toParagraph = (list) =>
+    list.length
+      ? list
+          .map((c, i) => sentenceFromClause(describeFeatureClause(disease, c.feature, c.value, formValues), i))
+          .join(' ')
+      : null;
+
+  return {
+    increasing: toParagraph(increasing),
+    offsetting: toParagraph(offsetting),
+    synthesis: synthesisSentence(disease, increasing),
+    closing: closingParagraph(band, disease),
+  };
 }

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { HeartPulse, AlertTriangle } from 'lucide-react';
 import { Card, Field, NumberInput, Select, Button, ModelBadge } from '../components/ui';
 import PredictionResult from '../components/PredictionResult';
+import WhyThisModel from '../components/WhyThisModel';
 import Waveform, { WaveformPulse } from '../components/Waveform';
 import { api, ApiError } from '../lib/api';
 
@@ -50,6 +51,13 @@ export default function PredictHeart() {
         </div>
         <ModelBadge label="High-accuracy model" name="TabPFN" metric="0.9584 ROC-AUC" />
       </div>
+      <WhyThisModel>
+        TabPFN was chosen for heart disease predictions because it consistently outscored ten
+        other AI models during testing — including well-established methods and several newer
+        designs. It comes pre-trained on a huge variety of data patterns, which helps it perform
+        reliably even with a relatively small set of patient records like this one, and it
+        reached its best result without needing any manual fine-tuning.
+      </WhyThisModel>
       <h1 className="font-display font-semibold text-3xl text-ink-50 light:text-ink-900 mt-3">
         Heart disease risk
       </h1>

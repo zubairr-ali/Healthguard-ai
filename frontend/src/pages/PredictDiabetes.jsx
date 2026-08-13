@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Droplets, AlertTriangle } from 'lucide-react';
 import { Card, Field, NumberInput, Button, ModelBadge } from '../components/ui';
 import PredictionResult from '../components/PredictionResult';
+import WhyThisModel from '../components/WhyThisModel';
 import Waveform, { WaveformPulse } from '../components/Waveform';
 import { api, ApiError } from '../lib/api';
 
@@ -55,6 +56,13 @@ export default function PredictDiabetes() {
         </div>
         <ModelBadge label="Validated model" name="XGBoost" metric="0.8233 ROC-AUC" />
       </div>
+      <WhyThisModel>
+        XGBoost was chosen for diabetes predictions because it outperformed ten other models
+        during testing, including a modern pretrained AI system and three specialised
+        transformer models. It's particularly good at picking up on meaningful thresholds in the
+        data — for example, the glucose levels that mark a shift from normal to at-risk — which
+        fits well with how diabetes risk factors typically behave.
+      </WhyThisModel>
       <h1 className="font-display font-semibold text-3xl text-ink-50 light:text-ink-900 mt-3">
         Diabetes risk
       </h1>

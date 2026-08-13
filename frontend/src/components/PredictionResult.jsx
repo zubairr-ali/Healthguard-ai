@@ -66,10 +66,49 @@ export default function PredictionResult({ result, disease, diseaseLabel = 'elev
 
       {advisory && (
         <div className="mb-8">
-          <h4 className="text-sm font-semibold text-ink-100 light:text-ink-800 mb-2">
+          <h4 className="text-sm font-semibold text-ink-100 light:text-ink-800 mb-4">
             Advisory note
           </h4>
-          <p className="text-sm text-ink-300 light:text-ink-600 leading-relaxed">{advisory}</p>
+          <div className="space-y-5">
+            {advisory.increasing && (
+              <div>
+                <h5 className="text-xs font-semibold tracking-wide uppercase text-signal-400 mb-1.5">
+                  Factors increasing risk
+                </h5>
+                <p className="text-sm text-ink-300 light:text-ink-600 leading-relaxed">
+                  {advisory.increasing}
+                </p>
+              </div>
+            )}
+            {advisory.offsetting && (
+              <div>
+                <h5 className="text-xs font-semibold tracking-wide uppercase text-vital-400 mb-1.5">
+                  Factors offsetting risk
+                </h5>
+                <p className="text-sm text-ink-300 light:text-ink-600 leading-relaxed">
+                  {advisory.offsetting}
+                </p>
+              </div>
+            )}
+            {advisory.synthesis && (
+              <div>
+                <h5 className="text-xs font-semibold tracking-wide uppercase text-ink-400 light:text-ink-500 mb-1.5">
+                  Clinical impression
+                </h5>
+                <p className="text-sm text-ink-300 light:text-ink-600 leading-relaxed">
+                  {advisory.synthesis}
+                </p>
+              </div>
+            )}
+            <div>
+              <h5 className="text-xs font-semibold tracking-wide uppercase text-ink-400 light:text-ink-500 mb-1.5">
+                Suggested next steps
+              </h5>
+              <p className="text-sm text-ink-300 light:text-ink-600 leading-relaxed">
+                {advisory.closing}
+              </p>
+            </div>
+          </div>
         </div>
       )}
 
